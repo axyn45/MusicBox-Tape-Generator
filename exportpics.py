@@ -24,7 +24,7 @@ from matplotlib.pyplot import fill
 import mido
 import emid
 import notecounter as nct
-
+from collections import OrderedDict
 
 
 PITCH_TO_MBNUM = {93: 29, 91: 28, 89: 27, 88: 26, 87: 25, 86: 24, 85: 23, 84: 22,
@@ -207,17 +207,18 @@ def export_pics(file,
                                 beat = realtime / 60 * interpret_bpm  # 计算beat
 
                             time = beat * 8 * scale
-                            if time - prev_time[pitch] >= 8:
-                                prev_time[pitch] = time
-                                notes.append([PITCH_TO_MBNUM[pitch],
-                                              time])  # 添加note
-                            else:  # 如果音符过近，则直接忽略该音符
-                                print(
-                                    f'[WARN] Too Near! Note {pitch} in bar {math.floor(miditime / ticks_per_beat / 4) + 1}')
+                            #if time - prev_time[pitch] >= 8:
+                            prev_time[pitch] = time
+                            notes.append([PITCH_TO_MBNUM[pitch],
+                                            time])  # 添加note
+                            #else:  # 如果音符过近，则直接忽略该音符
+                            #    print(
+                            #        f'[WARN] Too Near! Note {pitch} in bar {math.floor(miditime / ticks_per_beat / 4) + 1}')
                         else:  # 如果超出音域
                             print(
                                 f'[WARN] Note {pitch} in bar {math.floor(miditime / ticks_per_beat / 4) + 1} is out of range')
         notes.sort(key=lambda a: (a[1], a[0]))  # 按time排序
+        notes = [i for n, i in enumerate(notes) if i not in notes[:n]]  
         length = notes[-1][1]
         return notes, length
 
@@ -409,57 +410,79 @@ def export_pics(file,
                        font=font1,
                        fill=(0, 0, 0, 255))
             '栏右上角文字'
-            for k, char in enumerate(musicname):
-                textsize = font2.getsize(char)
-                draw0.text(
-                    xy=posconvert(
-                        (startpos[0] + 70*j + 59 - pixel2mm(textsize[0], ppi) / 2,
-                         startpos[1] + 8*k + 7 - pixel2mm(textsize[1], ppi)), ppi),
-                    text=char, font=font2, fill=(0, 0, 0, 90))
+            #for k, char in enumerate(musicname):
+            #    textsize = font2.getsize(char)
+            #    draw0.text(
+            #        xy=posconvert(
+            #            (startpos[0] + 70*j + 59 - pixel2mm(textsize[0], ppi) / 2,
+            #             startpos[1] + 8*k + 7 - pixel2mm(textsize[1], ppi)), ppi),
+            #        text=char, font=font2, fill=(0, 0, 0, 60))
             '栏右上角页码'
-            textsize = font2.getsize(str(colnum))
-            
-            draw0.text(
-                xy=posconvert(
-                    (startpos[0] + 70*j + 62 - pixel2mm(textsize[0], ppi),
-                     startpos[1] + 8*len(musicname) + 7 - pixel2mm(textsize[1], ppi)), ppi),
-                text=str(colnum), font=font2, fill=(0, 0, 0, 90))
-            sign = "B站：Alex的八音盒"
+            #textsize = font2.getsize(str(colnum))
+            #draw0.text(
+            #    xy=posconvert(
+            #        (startpos[0] + 70*j + 62 - pixel2mm(textsize[0], ppi),
+            #         startpos[1] + 8*len(musicname) + 7 - pixel2mm(textsize[1], ppi)), ppi),
+            #    text=str(colnum), font=font2, fill=(0, 0, 0, 150))
+            sign = "" #B站：Alex的八音盒
+            sign1 = "sdbfe"
 
             #水印*4/栏
             draw0.text(
                 xy=posconvert(
                     (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
+                     startpos[1] + 8*len(musicname)-120 - pixel2mm(textsize[1], ppi)), ppi),
+                text=sign, font=font2, fill=(0, 0, 0, 40))
+            draw0.text(
+                xy=posconvert(
+                    (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
+                     startpos[1] + 8*len(musicname)-90 - pixel2mm(textsize[1], ppi)), ppi),
+                text=sign, font=font2, fill=(0, 0, 0, 40))
+            draw0.text(
+                xy=posconvert(
+                    (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
+                     startpos[1] + 8*len(musicname)-60 - pixel2mm(textsize[1], ppi)), ppi),
+                text=sign, font=font2, fill=(0, 0, 0, 40))
+            draw0.text(
+                xy=posconvert(
+                    (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
+                     startpos[1] + 8*len(musicname)-30 - pixel2mm(textsize[1], ppi)), ppi),
+                text=sign, font=font2, fill=(0, 0, 0, 40))
+            #################################################
+            draw0.text(
+                xy=posconvert(
+                    (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
+                     startpos[1] + 8*len(musicname) - pixel2mm(textsize[1], ppi)), ppi),
+                text=sign, font=font2, fill=(0, 0, 0, 40))
+            draw0.text(
+                xy=posconvert(
+                    (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
                      startpos[1] + 8*len(musicname)+30 - pixel2mm(textsize[1], ppi)), ppi),
-                text=sign, font=font2, fill=(0, 0, 0, 60))
+                text=sign, font=font2, fill=(0, 0, 0, 40))
             draw0.text(
                 xy=posconvert(
                     (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
-                     startpos[1] + 8*len(musicname)+80 - pixel2mm(textsize[1], ppi)), ppi),
-                text=sign, font=font2, fill=(0, 0, 0, 60))
+                     startpos[1] + 8*len(musicname)+60 - pixel2mm(textsize[1], ppi)), ppi),
+                text=sign, font=font2, fill=(0, 0, 0, 40))
             draw0.text(
                 xy=posconvert(
                     (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
-                     startpos[1] + 8*len(musicname)+130 - pixel2mm(textsize[1], ppi)), ppi),
-                text=sign, font=font2, fill=(0, 0, 0, 60))
-            draw0.text(
-                xy=posconvert(
-                    (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
-                     startpos[1] + 8*len(musicname)+180 - pixel2mm(textsize[1], ppi)), ppi),
-                text=sign, font=font2, fill=(0, 0, 0, 60))
+                     startpos[1] + 8*len(musicname)+90 - pixel2mm(textsize[1], ppi)), ppi),
+                text=sign, font=font2, fill=(0, 0, 0, 40))
 
-
+        total_beats=0
         '画格子'
         for j in range(col if i < pages - 1 else cols):
             
             '整拍横线'
             for k in range(row + 1):
-                
+                if(j!=0 and k==0):
+                    total_beats+=row
                 #绘制小节标识和粘贴音名标识图
-                if (k%4==0):
+                if ((total_beats+k)%8==0 and k!=row):
                     #粘贴音名标识图
-                    if(COL_NO%9==0):
-                        image0.paste(note_ref,posconvert((startpos[0] + 70*j + 2.5,startpos[1]+8*k+80)))
+                    #if(COL_NO%9==0):
+                    #    image0.paste(note_ref,posconvert((startpos[0] + 70*j + 2.5,startpos[1]+8*k+80)))
                     #绘制小节标识
                     if(COL_NO<10):
                         draw0.text(xy=posconvert((startpos[0] + 70*j + 6 + 2*28,startpos[1] + 8*k)),text=str(COL_NO+1),font=font0,fill=(0,0,0,255))
@@ -467,7 +490,7 @@ def export_pics(file,
                         draw0.text(xy=posconvert((startpos[0] + 70*j + 6 + 2*27,startpos[1] + 8*k)),text=str(COL_NO+1),font=font0,fill=(0,0,0,255))
                     else:
                         draw0.text(xy=posconvert((startpos[0] + 70*j + 6 + 2*26,startpos[1] + 8*k)),text=str(COL_NO+1),font=font0,fill=(0,0,0,255))
-                    COL_NO=COL_NO+1
+                    COL_NO+=1
                 
                 #绘制整拍横线
                 draw0.line(posconvert((startpos[0] + 70*j + 6,
@@ -538,7 +561,7 @@ def export_pics(file,
         rowmm = math.modf(time / (row * 8))[0] * (row * 8)
         draw1 = draws1[page]
         #对x求余，即每x个孔显示一次孔位编号，默认50
-        if((NOTE_COUNT+1)%50==0 or (NOTE_COUNT+1)==len(notes)):
+        if((NOTE_COUNT+1)%100==0 or (NOTE_COUNT+1)==len(notes)):
             if((NOTE_COUNT+1)<10):
                 draw1.text(xy=posconvert((startpos[0] + 70*coln + 6 + 2*pitch -0.9,startpos[1] + rowmm-2.2), ppi * ANTI_ALIAS),text=str(NOTE_COUNT+1),font=font0,fill=(255,0,0,255))
             elif((NOTE_COUNT+1)<100):

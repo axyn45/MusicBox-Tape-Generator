@@ -283,3 +283,4 @@ if __name__ == '__main__':
     batch_conv_midi2emid()
 
 batch_conv_emid2midi(path=None)
+#batch_conv_midi2emid()
