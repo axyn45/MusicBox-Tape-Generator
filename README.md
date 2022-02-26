@@ -20,5 +20,5 @@ Python编写的程序，用于.emid与.mid文件的互相转换，以及生成�
 
 致谢原作者：@[BiologyHazard](https://github.com/BiologyHazard)
 
-项目源地址：https://github.com/BiologyHazard/MusicBoxDesigner
+原项目地址：https://github.com/BiologyHazard/MusicBoxDesigner
 
