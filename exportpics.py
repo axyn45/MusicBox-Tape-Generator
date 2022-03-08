@@ -372,6 +372,8 @@ def export_pics(file,
     note_ref=note_ref.crop((left,upper,right,lower))
     #note_ref.show()
 
+    total_beats=0
+
     for i in range(pages):
         test_pos=posconvert(size, ppi)
         image0 = PIL.Image.new('RGBA', posconvert(size, ppi), (0, 0, 0, 0))
@@ -410,13 +412,14 @@ def export_pics(file,
                        font=font1,
                        fill=(0, 0, 0, 255))
             '栏右上角文字'
-            #for k, char in enumerate(musicname):
-            #    textsize = font2.getsize(char)
-            #    draw0.text(
-            #        xy=posconvert(
-            #            (startpos[0] + 70*j + 59 - pixel2mm(textsize[0], ppi) / 2,
-            #             startpos[1] + 8*k + 7 - pixel2mm(textsize[1], ppi)), ppi),
-            #        text=char, font=font2, fill=(0, 0, 0, 60))
+            if(j==0):
+                for k, char in enumerate(musicname):
+                   textsize = font2.getsize(char)
+                   draw0.text(
+                       xy=posconvert(
+                           (startpos[0] + 70*j + 59 - pixel2mm(textsize[0], ppi) / 2,
+                            startpos[1] + 8*k + 7 - pixel2mm(textsize[1], ppi)), ppi),
+                       text=char, font=font2, fill=(0, 0, 0, 60))
             '栏右上角页码'
             #textsize = font2.getsize(str(colnum))
             #draw0.text(
@@ -470,21 +473,22 @@ def export_pics(file,
                      startpos[1] + 8*len(musicname)+90 - pixel2mm(textsize[1], ppi)), ppi),
                 text=sign, font=font2, fill=(0, 0, 0, 40))
 
-        total_beats=0
+        
         '画格子'
         for j in range(col if i < pages - 1 else cols):
             
             '整拍横线'
             for k in range(row + 1):
-                if(j!=0 and k==0):
-                    total_beats+=row
+                # if(j!=0 and k==0):
+                #     total_beats+=row
+                total_beats+=1
                 #绘制小节标识和粘贴音名标识图
-                if ((total_beats+k)%8==0 and k!=row):
+                if (total_beats%8==1):
                     #粘贴音名标识图
                     #if(COL_NO%9==0):
                     #    image0.paste(note_ref,posconvert((startpos[0] + 70*j + 2.5,startpos[1]+8*k+80)))
                     #绘制小节标识
-                    if(COL_NO<10):
+                    if(COL_NO<(10-1)):
                         draw0.text(xy=posconvert((startpos[0] + 70*j + 6 + 2*28,startpos[1] + 8*k)),text=str(COL_NO+1),font=font0,fill=(0,0,0,255))
                     elif(COL_NO<100):
                         draw0.text(xy=posconvert((startpos[0] + 70*j + 6 + 2*27,startpos[1] + 8*k)),text=str(COL_NO+1),font=font0,fill=(0,0,0,255))
@@ -513,6 +517,8 @@ def export_pics(file,
                            posconvert((startpos[0] + 70*j + 6 + 2*k,
                                        endpos[1]), ppi),
                            fill=(0, 0, 0, 255), width=1)
+
+            total_beats-=1
         '分隔线'
         for j in range(col + 1 if i < pages - 1 else cols + 1):
             draw0.line(posconvert((startpos[0] + 70*j,
@@ -615,7 +621,7 @@ def export_pics(file,
             if not overwrite:
                 save_path = emid.find_available_filename(save_path)
             print(f'Exporting pics ({pagenum + 1} of {pages})...')
-            cpimage.save(save_path)
+            cpimage.save(save_path,dpi=(300,300))
         result.append(cpimage)
 
     print('Done!')
