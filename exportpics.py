@@ -1,9 +1,10 @@
 '''
 用于从.emid和.mid文件生成纸带八音盒设计稿
 
-作者：bilibili@Bio-Hazard
-    QQ3482991796
-    QQ群586134350
+
+开发者：Github@axyn45，Bilibili@Alex的八音盒
+原作者：bilibili@Bio-Hazard
+
 
 FairyMusicBox系列软件作者：bilibili@调皮的码农
 
