@@ -55,7 +55,7 @@ PAPER_INFO = {A4_VERTICAL: {'size': (210, 297), 'col': 3, 'row': 35},
               B5_HORIZONAL: {'size': (250, 176), 'col': 3, 'row': 20},
               B4_VERTICAL: {'size': (250, 353), 'col': 3, 'row': 42},
               B4_HORIZONAL: {'size': (353, 250), 'col': 5, 'row': 29},
-              TEST_SIZE:{'size':(70,4000),'col':1,'row':420}}
+              TEST_SIZE: {'size': (70, 4000), 'col': 1, 'row': 420}}
 
 FONT_PATH = [
     'C:\\Users\\' + os.getlogin() +
@@ -104,7 +104,9 @@ def export_pics(file,
                 ppi: float = DEFAULT_PPI,
                 background=(255, 255, 0, 255),
                 save_pic: bool = True,
-                overwrite: bool = False) -> list:
+                overwrite: bool = False,
+                track_selection: int = -1,
+                isSuccessful: bool = True) -> list:
     '''
     将.emid或.mid文件转换成纸带八音盒设计稿
 
@@ -165,6 +167,7 @@ def export_pics(file,
     def process_midifile(midifile, transposition=transposition):
         '处理midi文件'
         ticks_per_beat = midifile.ticks_per_beat
+
         notes = []
         prev_time = {93: -8, 91: -8, 89: -8, 88: -8, 87: -8, 86: -8, 85: -8, 84: -8,
                      83: -8, 82: -8, 81: -8, 80: -8, 79: -8, 78: -8, 77: -8, 76: -8,
@@ -188,63 +191,111 @@ def export_pics(file,
                 realtime += mido.tick2second(delta_miditime,
                                              ticks_per_beat, tempo)
                 time_passed.append(realtime)
+        if track_selection==-1:
+            for track in midifile.tracks:
+                miditime = 0
+                for msg in track:
+                    miditime += msg.time
+                    if msg.type == 'note_on':
+                        if msg.velocity > 0:
+                            pitch = msg.note + transposition
+                            if pitch in PITCH_TO_MBNUM:
+                                if interpret_bpm is None:
+                                    beat = miditime / ticks_per_beat
+                                else:
+                                    i = _find_latest_event(tempo_events, miditime)
+                                    tempo, tick = tempo_events[i]
+                                    realtime = time_passed[i] + mido.tick2second(
+                                        miditime - tick, ticks_per_beat, tempo)
+                                    beat = realtime / 60 * interpret_bpm  # 计算beat
 
-        for track in midifile.tracks:
-            miditime = 0
-            for msg in track:
-                miditime += msg.time
-                if msg.type == 'note_on':
-                    if msg.velocity > 0:
-                        pitch = msg.note + transposition
-                        if pitch in PITCH_TO_MBNUM:
-                            if interpret_bpm is None:
-                                beat = miditime / ticks_per_beat
-                            else:
-                                i = _find_latest_event(tempo_events, miditime)
-                                tempo, tick = tempo_events[i]
-                                realtime = time_passed[i] + mido.tick2second(
-                                    miditime - tick, ticks_per_beat, tempo)
-                                beat = realtime / 60 * interpret_bpm  # 计算beat
+                                time = beat * 8 * scale
+                                # if time - prev_time[pitch] >= 8:
+                                prev_time[pitch] = time
+                                notes.append([PITCH_TO_MBNUM[pitch],
+                                              time])  # 添加note
+                                # else:  # 如果音符过近，则直接忽略该音符
+                                #    print(
+                                #        f'[WARN] Too Near! Note {pitch} in bar {math.floor(miditime / ticks_per_beat / 4) + 1}')
+                            else:  # 如果超出音域
+                                print(
+                                    f'[WARN] Note {pitch} in bar {math.floor(miditime / ticks_per_beat / 4) + 1} is out of range')
+        else:
+            noInfoTrackCount=0
+            for track in midifile.tracks:
+                if track.name=='':
+                    noInfoTrackCount+=1
+                    continue
+            if(len(midifile.tracks)-noInfoTrackCount<track_selection):
+                return None,None
+            i=1
+            for track in midifile.tracks:
+                if track.name=='':
+                    continue
+                elif i!=track_selection:
+                    i+=1
+                    continue
+                miditime = 0
+                for msg in track:
+                    miditime += msg.time
+                    if msg.type == 'note_on':
+                        if msg.velocity > 0:
+                            pitch = msg.note + transposition
+                            if pitch in PITCH_TO_MBNUM:
+                                if interpret_bpm is None:
+                                    beat = miditime / ticks_per_beat
+                                else:
+                                    i = _find_latest_event(tempo_events, miditime)
+                                    tempo, tick = tempo_events[i]
+                                    realtime = time_passed[i] + mido.tick2second(
+                                        miditime - tick, ticks_per_beat, tempo)
+                                    beat = realtime / 60 * interpret_bpm  # 计算beat
 
-                            time = beat * 8 * scale
-                            #if time - prev_time[pitch] >= 8:
-                            prev_time[pitch] = time
-                            notes.append([PITCH_TO_MBNUM[pitch],
-                                            time])  # 添加note
-                            #else:  # 如果音符过近，则直接忽略该音符
-                            #    print(
-                            #        f'[WARN] Too Near! Note {pitch} in bar {math.floor(miditime / ticks_per_beat / 4) + 1}')
-                        else:  # 如果超出音域
-                            print(
-                                f'[WARN] Note {pitch} in bar {math.floor(miditime / ticks_per_beat / 4) + 1} is out of range')
+                                time = beat * 8 * scale
+                                # if time - prev_time[pitch] >= 8:
+                                prev_time[pitch] = time
+                                notes.append([PITCH_TO_MBNUM[pitch],
+                                              time])  # 添加note
+                                # else:  # 如果音符过近，则直接忽略该音符
+                                #    print(
+                                #        f'[WARN] Too Near! Note {pitch} in bar {math.floor(miditime / ticks_per_beat / 4) + 1}')
+                            else:  # 如果超出音域
+                                print(
+                                    f'[WARN] Note {pitch} in bar {math.floor(miditime / ticks_per_beat / 4) + 1} is out of range')
+                break
         notes.sort(key=lambda a: (a[1], a[0]))  # 按time排序
-        notes = [i for n, i in enumerate(notes) if i not in notes[:n]]  
+        notes = [i for n, i in enumerate(notes) if i not in notes[:n]]
         length = notes[-1][1]
         return notes, length
+
 
     print('Processing Data...')
     '打开文件以及处理默认值'
     typ = type(file)
     if typ == str:
-        #文件名替代heading
-        strbin,aligntype=heading
+        # 文件名替代heading
+        strbin, aligntype = heading
+        # track_No=None
         if filename is None:
-            filename = os.path.splitext(file)[0] + '_%d.png'
-            #页眉显示曲目名称
-            heading=(os.path.splitext(file)[0],aligntype)
+            if track_selection>0:
+                filename = os.path.splitext(file)[0]+ '_Track' + str(track_selection)+'_%d.png'
+            else:
+                filename = os.path.splitext(file)[0] +'_%d.png'
+            # 页眉显示曲目名称
+            heading = (os.path.splitext(file)[0]+ '_Track'+str(track_selection), aligntype)
         if musicname is None:
-            musicname = os.path.splitext(os.path.split(file)[1])[0]
-            #页眉显示曲目名称
-            heading=(os.path.splitext(os.path.split(file)[1])[0],aligntype)
-
+            musicname = os.path.splitext(os.path.split(file)[1])[0]+ '_Track'+str(track_selection)
+            # 页眉显示曲目名称
+            heading = (os.path.splitext(os.path.split(file)[1])[0]+ '_Track'+str(track_selection), aligntype)
+            
         extention = os.path.splitext(file)[1]
         if extention == '.emid':
-            TEmid=emid.EmidFile(file)
+            TEmid = emid.EmidFile(file)
             notes, length = process_emidfile(emid.mido.MidiFile(file))
-            NOTES_SUM, TAPE_LENGTH=nct.notes_and_length(filename)
+            NOTES_SUM, TAPE_LENGTH = nct.notes_and_length(filename)
         elif extention == '.mid':
             notes, length = process_midifile(mido.MidiFile(file))
-            NOTES_SUM, TAPE_LENGTH=nct.notes_and_length(mido.MidiFile(file))
+            NOTES_SUM, TAPE_LENGTH = nct.notes_and_length(mido.MidiFile(file))
         else:
             raise(ValueError('Unknown file extention (\'.mid\' or \'.emid\' required)'))
 
@@ -259,9 +310,15 @@ def export_pics(file,
         else:
             notes, length = process_midifile(file)
 
+    
     else:
         raise(ValueError(
             'Unknown file type (filename, emid.EmidFile or mido.MidiFile required)'))
+
+    #所有音轨都输出完毕
+    if notes==None:
+        isSuccessful=False
+        return isSuccessful
 
     if papersize == AUTO_SIZE:  # 计算纸张大小
         col = 1
@@ -301,91 +358,120 @@ def export_pics(file,
         font1 = PIL.ImageFont.truetype(font, round(mm2pixel(3.4, ppi)))
         font2 = PIL.ImageFont.truetype(font, round(mm2pixel(6, ppi)))
 
-    
-
     print('Drawing...')
     images0 = []
     images1 = []
-    #test
-    images2=[]
+    # test
+    images2 = []
 
     draws0 = []
     draws1 = []
-    #test
-    draws2=[]
+    # test
+    draws2 = []
 
-    #统计小节数，从0开始
-    COL_NO=0
-    #统计已打印的note数量
-    NOTE_COUNT=0 
-    note_ref=PIL.Image.new('RGBA',posconvert((2*32,2*32),ppi),(255,255,255,255))
-    draw_ref=PIL.ImageDraw.Draw(note_ref)
-    
-    #准备音名标识图片
-    #vp for vertival position
-    vp1=2
-    vp2=8
-    vp3=14
-    vp4=20
+    # 统计小节数，从0开始
+    COL_NO = 0
+    # 统计已打印的note数量
+    NOTE_COUNT = 0
+    note_ref = PIL.Image.new('RGBA', posconvert(
+        (2*32, 2*32), ppi), (255, 255, 255, 255))
+    draw_ref = PIL.ImageDraw.Draw(note_ref)
 
-    #绘制音名标识图片
-    #1~10
-    draw_ref.text(xy=posconvert((vp1,2),ppi),text="C",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp2,4),ppi),text="D",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp3,6),ppi),text="G",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp4,8),ppi),text="A",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp3,10),ppi),text="B",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp2,12),ppi),text="C1",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp1,14),ppi),text="D1",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp2,16),ppi),text="E1",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp3,18),ppi),text="F1",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp4,20),ppi),text="#F1",font=font_ref,fill=(28, 43, 255,255))
-    #11~20
-    draw_ref.text(xy=posconvert((vp3,22),ppi),text="G1",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp2,24),ppi),text="#G1",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp1,26),ppi),text="A1",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp2,28),ppi),text="#A1",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp3,30),ppi),text="B1",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp4,32),ppi),text="C2",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp3,34),ppi),text="#C2",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp2,36),ppi),text="D2",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp1,38),ppi),text="#D2",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp2,40),ppi),text="E2",font=font_ref,fill=(28, 43, 255,255))
-    #21~30
-    draw_ref.text(xy=posconvert((vp3,42),ppi),text="F2",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp4,44),ppi),text="#F2",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp3,46),ppi),text="G2",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp2,48),ppi),text="#G2",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp1,50),ppi),text="A2",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp2,52),ppi),text="#A2",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp3,54),ppi),text="B2",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp4,56),ppi),text="C3",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp3,58),ppi),text="D3",font=font_ref,fill=(28, 43, 255,255))
-    draw_ref.text(xy=posconvert((vp2,60),ppi),text="E3",font=font_ref,fill=(28, 43, 255,255))
-    
-    #图片旋转90°
-    note_ref=note_ref.rotate(angle=90)
-    #定义裁切点坐标
-    left,upper=posconvert((0,40),ppi)
-    right,lower=posconvert((2*32,2*32),ppi)
-    #裁切图片
-    note_ref=note_ref.crop((left,upper,right,lower))
-    #note_ref.show()
+    # 准备音名标识图片
+    # vp for vertival position
+    vp1 = 2
+    vp2 = 8
+    vp3 = 14
+    vp4 = 20
 
-    total_beats=0
+    # 绘制音名标识图片
+    # 1~10
+    draw_ref.text(xy=posconvert((vp1, 2), ppi), text="C",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2, 4), ppi), text="D",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp3, 6), ppi), text="G",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp4, 8), ppi), text="A",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp3, 10), ppi), text="B",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2, 12), ppi), text="C1",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp1, 14), ppi), text="D1",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2, 16), ppi), text="E1",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp3, 18), ppi), text="F1",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp4, 20), ppi), text="#F1",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    # 11~20
+    draw_ref.text(xy=posconvert((vp3, 22), ppi), text="G1",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2, 24), ppi), text="#G1",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp1, 26), ppi), text="A1",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2, 28), ppi), text="#A1",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp3, 30), ppi), text="B1",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp4, 32), ppi), text="C2",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp3, 34), ppi), text="#C2",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2, 36), ppi), text="D2",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp1, 38), ppi), text="#D2",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2, 40), ppi), text="E2",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    # 21~30
+    draw_ref.text(xy=posconvert((vp3, 42), ppi), text="F2",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp4, 44), ppi), text="#F2",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp3, 46), ppi), text="G2",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2, 48), ppi), text="#G2",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp1, 50), ppi), text="A2",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2, 52), ppi), text="#A2",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp3, 54), ppi), text="B2",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp4, 56), ppi), text="C3",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp3, 58), ppi), text="D3",
+                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2, 60), ppi), text="E3",
+                  font=font_ref, fill=(28, 43, 255, 255))
+
+    # 图片旋转90°
+    note_ref = note_ref.rotate(angle=90)
+    # 定义裁切点坐标
+    left, upper = posconvert((0, 40), ppi)
+    right, lower = posconvert((2*32, 2*32), ppi)
+    # 裁切图片
+    note_ref = note_ref.crop((left, upper, right, lower))
+    # note_ref.show()
+
+    total_beats = 0
 
     for i in range(pages):
-        test_pos=posconvert(size, ppi)
+        test_pos = posconvert(size, ppi)
         image0 = PIL.Image.new('RGBA', posconvert(size, ppi), (0, 0, 0, 0))
         image1 = PIL.Image.new('RGBA', posconvert(
             size, ppi * ANTI_ALIAS), (0, 0, 0, 0))
-        
-        image2=PIL.Image.new('RGBA', posconvert(size, ppi), (0, 0, 0, 0))
+
+        image2 = PIL.Image.new('RGBA', posconvert(size, ppi), (0, 0, 0, 0))
 
         draw0 = PIL.ImageDraw.Draw(image0)
         draw1 = PIL.ImageDraw.Draw(image1)
 
-        draw2=PIL.ImageDraw.Draw(image2)
+        draw2 = PIL.ImageDraw.Draw(image2)
         '写字'
         for j in range(col if i < pages - 1 else cols):
             '标题文字'
@@ -412,25 +498,25 @@ def export_pics(file,
                        font=font1,
                        fill=(0, 0, 0, 255))
             '栏右上角文字'
-            if(j==0):
+            if(j == 0):
                 for k, char in enumerate(musicname):
-                   textsize = font2.getsize(char)
-                   draw0.text(
-                       xy=posconvert(
-                           (startpos[0] + 70*j + 59 - pixel2mm(textsize[0], ppi) / 2,
-                            startpos[1] + 8*k + 7 - pixel2mm(textsize[1], ppi)), ppi),
-                       text=char, font=font2, fill=(0, 0, 0, 60))
+                    textsize = font2.getsize(char)
+                    draw0.text(
+                        xy=posconvert(
+                            (startpos[0] + 70*j + 59 - pixel2mm(textsize[0], ppi) / 2,
+                             startpos[1] + 8*k + 7 - pixel2mm(textsize[1], ppi)), ppi),
+                        text=char, font=font2, fill=(0, 0, 0, 60))
             '栏右上角页码'
-            #textsize = font2.getsize(str(colnum))
-            #draw0.text(
+            textsize = font2.getsize(str(colnum))
+            # draw0.text(
             #    xy=posconvert(
             #        (startpos[0] + 70*j + 62 - pixel2mm(textsize[0], ppi),
             #         startpos[1] + 8*len(musicname) + 7 - pixel2mm(textsize[1], ppi)), ppi),
             #    text=str(colnum), font=font2, fill=(0, 0, 0, 150))
-            sign = "" #B站：Alex的八音盒
+            sign = "B站：Alex的八音盒"
             sign1 = "sdbfe"
 
-            #水印*4/栏
+            # 水印*4/栏
             draw0.text(
                 xy=posconvert(
                     (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
@@ -439,70 +525,72 @@ def export_pics(file,
             draw0.text(
                 xy=posconvert(
                     (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
-                     startpos[1] + 8*len(musicname)-90 - pixel2mm(textsize[1], ppi)), ppi),
+                     startpos[1] + 8*len(musicname)-70 - pixel2mm(textsize[1], ppi)), ppi),
                 text=sign, font=font2, fill=(0, 0, 0, 40))
             draw0.text(
                 xy=posconvert(
                     (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
-                     startpos[1] + 8*len(musicname)-60 - pixel2mm(textsize[1], ppi)), ppi),
-                text=sign, font=font2, fill=(0, 0, 0, 40))
-            draw0.text(
-                xy=posconvert(
-                    (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
-                     startpos[1] + 8*len(musicname)-30 - pixel2mm(textsize[1], ppi)), ppi),
-                text=sign, font=font2, fill=(0, 0, 0, 40))
-            #################################################
-            draw0.text(
-                xy=posconvert(
-                    (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
-                     startpos[1] + 8*len(musicname) - pixel2mm(textsize[1], ppi)), ppi),
+                     startpos[1] + 8*len(musicname)-20 - pixel2mm(textsize[1], ppi)), ppi),
                 text=sign, font=font2, fill=(0, 0, 0, 40))
             draw0.text(
                 xy=posconvert(
                     (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
                      startpos[1] + 8*len(musicname)+30 - pixel2mm(textsize[1], ppi)), ppi),
                 text=sign, font=font2, fill=(0, 0, 0, 40))
+            #################################################
             draw0.text(
                 xy=posconvert(
                     (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
-                     startpos[1] + 8*len(musicname)+60 - pixel2mm(textsize[1], ppi)), ppi),
+                     startpos[1] + 8*len(musicname) + 80 - pixel2mm(textsize[1], ppi)), ppi),
                 text=sign, font=font2, fill=(0, 0, 0, 40))
-            draw0.text(
-                xy=posconvert(
-                    (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
-                     startpos[1] + 8*len(musicname)+90 - pixel2mm(textsize[1], ppi)), ppi),
-                text=sign, font=font2, fill=(0, 0, 0, 40))
+            # draw0.text(
+            #     xy=posconvert(
+            #         (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
+            #          startpos[1] + 8*len(musicname)+30 - pixel2mm(textsize[1], ppi)), ppi),
+            #     text=sign, font=font2, fill=(0, 0, 0, 40))
+            # draw0.text(
+            #     xy=posconvert(
+            #         (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
+            #          startpos[1] + 8*len(musicname)+60 - pixel2mm(textsize[1], ppi)), ppi),
+            #     text=sign, font=font2, fill=(0, 0, 0, 40))
+            # draw0.text(
+            #     xy=posconvert(
+            #         (startpos[0] + 70*j + 15 - pixel2mm(textsize[0], ppi),
+            #          startpos[1] + 8*len(musicname)+90 - pixel2mm(textsize[1], ppi)), ppi),
+            #     text=sign, font=font2, fill=(0, 0, 0, 40))
 
-        
         '画格子'
         for j in range(col if i < pages - 1 else cols):
-            
+
             '整拍横线'
             for k in range(row + 1):
                 # if(j!=0 and k==0):
                 #     total_beats+=row
-                total_beats+=1
-                #绘制小节标识和粘贴音名标识图
-                if (total_beats%8==1):
-                    #粘贴音名标识图
-                    #if(COL_NO%9==0):
+                total_beats += 1
+                # 绘制小节标识和粘贴音名标识图
+                if (total_beats % 8 == 1):
+                    # 粘贴音名标识图
+                    # if(COL_NO%9==0):
                     #    image0.paste(note_ref,posconvert((startpos[0] + 70*j + 2.5,startpos[1]+8*k+80)))
-                    #绘制小节标识
-                    if(COL_NO<(10-1)):
-                        draw0.text(xy=posconvert((startpos[0] + 70*j + 6 + 2*28,startpos[1] + 8*k)),text=str(COL_NO+1),font=font0,fill=(0,0,0,255))
-                    elif(COL_NO<100):
-                        draw0.text(xy=posconvert((startpos[0] + 70*j + 6 + 2*27,startpos[1] + 8*k)),text=str(COL_NO+1),font=font0,fill=(0,0,0,255))
+                    # 绘制小节标识
+                    if(COL_NO < (10-1)):
+                        draw0.text(xy=posconvert((startpos[0] + 70*j + 6 + 2*28, startpos[1] + 8*k)), text=str(
+                            COL_NO+1), font=font0, fill=(0, 0, 0, 255))
+                    elif(COL_NO < 100):
+                        draw0.text(xy=posconvert((startpos[0] + 70*j + 6 + 2*27, startpos[1] + 8*k)), text=str(
+                            COL_NO+1), font=font0, fill=(0, 0, 0, 255))
                     else:
-                        draw0.text(xy=posconvert((startpos[0] + 70*j + 6 + 2*26,startpos[1] + 8*k)),text=str(COL_NO+1),font=font0,fill=(0,0,0,255))
-                    COL_NO+=1
-                
-                #绘制整拍横线
+                        draw0.text(xy=posconvert((startpos[0] + 70*j + 6 + 2*26, startpos[1] + 8*k)), text=str(
+                            COL_NO+1), font=font0, fill=(0, 0, 0, 255))
+                    COL_NO += 1
+
+                # 绘制整拍横线
                 draw0.line(posconvert((startpos[0] + 70*j + 6,
                                        startpos[1] + 8*k), ppi) +
                            posconvert((startpos[0] + 70*j + 6 + 2*29,
                                        startpos[1] + 8*k), ppi),
                            fill=(0, 0, 0, 255), width=1)
-                
+
             '半拍横线'
             for k in range(row):
                 draw0.line(posconvert((startpos[0] + 70*j + 6,
@@ -518,7 +606,7 @@ def export_pics(file,
                                        endpos[1]), ppi),
                            fill=(0, 0, 0, 255), width=1)
 
-            total_beats-=1
+            total_beats -= 1
         '分隔线'
         for j in range(col + 1 if i < pages - 1 else cols + 1):
             draw0.line(posconvert((startpos[0] + 70*j,
@@ -534,54 +622,60 @@ def export_pics(file,
         draws1.append(draw1)
         draws2.append(draw2)
     '画note'
-    #NOTES_SUM=notes.count()
-    Index=0
+    # NOTES_SUM=notes.count()
+    Index = 0
     for pitch, time in notes:
         page = math.floor(time / (col * row * 8))
         coln = math.floor(time / (row * 8)) - page * col
         # math.modf(x)[0]取小数部分
         rowmm = math.modf(time / (row * 8))[0] * (row * 8)
         draw1 = draws1[page]
-        Index+=1
+        Index += 1
 
-        #高亮没有落在网格线交点的孔位
-        #浮点数有精度误差，需要设置一个误差范围来修正
-        if(rowmm%1>0.0001 and rowmm%1<0.9999):
+        # 高亮没有落在网格线交点的孔位
+        # 浮点数有精度误差，需要设置一个误差范围来修正
+        if(rowmm % 1 > 0.0001 and rowmm % 1 < 0.9999):
             draw1.ellipse(posconvert((startpos[0] + 70*coln + 6 + 2*pitch - DOT_R,
-                                  startpos[1] + rowmm - DOT_R), ppi * ANTI_ALIAS) +
-                      posconvert((startpos[0] + 70*coln + 6 + 2*pitch + DOT_R,
-                                  startpos[1] + rowmm + DOT_R), ppi * ANTI_ALIAS),
-                      fill=(255, 0, 200, 255))
+                                      startpos[1] + rowmm - DOT_R), ppi * ANTI_ALIAS) +
+                          posconvert((startpos[0] + 70*coln + 6 + 2*pitch + DOT_R,
+                                      startpos[1] + rowmm + DOT_R), ppi * ANTI_ALIAS),
+                          fill=(255, 0, 200, 255))
         else:
             draw1.ellipse(posconvert((startpos[0] + 70*coln + 6 + 2*pitch - DOT_R,
-                                  startpos[1] + rowmm - DOT_R), ppi * ANTI_ALIAS) +
-                      posconvert((startpos[0] + 70*coln + 6 + 2*pitch + DOT_R,
-                                  startpos[1] + rowmm + DOT_R), ppi * ANTI_ALIAS),
-                      fill=(0, 0, 0, 255))
-                      
-        
-    #标记孔位编号
-    for pitch,time in notes:
+                                      startpos[1] + rowmm - DOT_R), ppi * ANTI_ALIAS) +
+                          posconvert((startpos[0] + 70*coln + 6 + 2*pitch + DOT_R,
+                                      startpos[1] + rowmm + DOT_R), ppi * ANTI_ALIAS),
+                          fill=(0, 0, 0, 255))
+
+    # 标记孔位编号
+    for pitch, time in notes:
         page = math.floor(time / (col * row * 8))
         coln = math.floor(time / (row * 8)) - page * col
         rowmm = math.modf(time / (row * 8))[0] * (row * 8)
         draw1 = draws1[page]
-        #对x求余，即每x个孔显示一次孔位编号，默认50
-        if((NOTE_COUNT+1)%100==0 or (NOTE_COUNT+1)==len(notes)):
-            if((NOTE_COUNT+1)<10):
-                draw1.text(xy=posconvert((startpos[0] + 70*coln + 6 + 2*pitch -0.9,startpos[1] + rowmm-2.2), ppi * ANTI_ALIAS),text=str(NOTE_COUNT+1),font=font0,fill=(255,0,0,255))
-            elif((NOTE_COUNT+1)<100):
-                draw1.text(xy=posconvert((startpos[0] + 70*coln + 6 + 2*pitch -1.9,startpos[1] + rowmm-2.2), ppi * ANTI_ALIAS),text=str(NOTE_COUNT+1),font=font0,fill=(255,0,0,255))
-            elif((NOTE_COUNT+1)<1000):
-                draw1.text(xy=posconvert((startpos[0] + 70*coln + 6 + 2*pitch -2.9,startpos[1] + rowmm-2.2), ppi * ANTI_ALIAS),text=str(NOTE_COUNT+1),font=font0,fill=(255,0,0,255))
-            elif((NOTE_COUNT+1)<10000):
-                draw1.text(xy=posconvert((startpos[0] + 70*coln + 6 + 2*pitch -3.9,startpos[1] + rowmm-2.2), ppi * ANTI_ALIAS),text=str(NOTE_COUNT+1),font=font0,fill=(255,0,0,255))
+        # 对x求余，即每x个孔显示一次孔位编号，默认50
+        if((NOTE_COUNT+1) % 100 == 0 or (NOTE_COUNT+1) == len(notes)):
+            if((NOTE_COUNT+1) < 10):
+                draw1.text(xy=posconvert((startpos[0] + 70*coln + 6 + 2*pitch - 0.9, startpos[1] + rowmm-2.2),
+                           ppi * ANTI_ALIAS), text=str(NOTE_COUNT+1), font=font0, fill=(255, 0, 0, 255))
+            elif((NOTE_COUNT+1) < 100):
+                draw1.text(xy=posconvert((startpos[0] + 70*coln + 6 + 2*pitch - 1.9, startpos[1] + rowmm-2.2),
+                           ppi * ANTI_ALIAS), text=str(NOTE_COUNT+1), font=font0, fill=(255, 0, 0, 255))
+            elif((NOTE_COUNT+1) < 1000):
+                draw1.text(xy=posconvert((startpos[0] + 70*coln + 6 + 2*pitch - 2.9, startpos[1] + rowmm-2.2),
+                           ppi * ANTI_ALIAS), text=str(NOTE_COUNT+1), font=font0, fill=(255, 0, 0, 255))
+            elif((NOTE_COUNT+1) < 10000):
+                draw1.text(xy=posconvert((startpos[0] + 70*coln + 6 + 2*pitch - 3.9, startpos[1] + rowmm-2.2),
+                           ppi * ANTI_ALIAS), text=str(NOTE_COUNT+1), font=font0, fill=(255, 0, 0, 255))
             else:
-                draw1.text(xy=posconvert((startpos[0] + 70*coln + 6 + 2*pitch -4.9,startpos[1] + rowmm-2.2), ppi * ANTI_ALIAS),text=str(NOTE_COUNT+1),font=font0,fill=(255,0,0,255))
-            if((NOTE_COUNT+1)==len(notes)):
-                draw1.text(xy=posconvert((startpos[0] + 70*coln + 16, endpos[1]), ppi),text="Notes: "+str(NOTE_COUNT+1),font=font0,fill=(0,255,255,255))
-                draw1.text(xy=posconvert((startpos[0] + 70*coln + 38, endpos[1]), ppi),text="Length: "+str(round(TAPE_LENGTH*100,1))+"cm",font=font0,fill=(255,220,0,255))
-        NOTE_COUNT=NOTE_COUNT+1
+                draw1.text(xy=posconvert((startpos[0] + 70*coln + 6 + 2*pitch - 4.9, startpos[1] + rowmm-2.2),
+                           ppi * ANTI_ALIAS), text=str(NOTE_COUNT+1), font=font0, fill=(255, 0, 0, 255))
+            if((NOTE_COUNT+1) == len(notes)):
+                draw1.text(xy=posconvert((startpos[0] + 70*coln + 16, endpos[1]), ppi),
+                           text="Notes: "+str(NOTE_COUNT+1), font=font0, fill=(0, 255, 255, 255))
+                draw1.text(xy=posconvert((startpos[0] + 70*coln + 38, endpos[1]), ppi), text="Length: "+str(
+                    round(TAPE_LENGTH*100, 1))+"cm", font=font0, fill=(255, 220, 0, 255))
+        NOTE_COUNT = NOTE_COUNT+1
 
     print('Resizing...')
     for i in range(pages):
@@ -621,11 +715,11 @@ def export_pics(file,
             if not overwrite:
                 save_path = emid.find_available_filename(save_path)
             print(f'Exporting pics ({pagenum + 1} of {pages})...')
-            cpimage.save(save_path,dpi=(300,300))
+            cpimage.save(save_path, dpi=(300, 300))
         result.append(cpimage)
 
     print('Done!')
-    return result
+    return isSuccessful
 
 
 def batch_export_pics(path=None,
@@ -633,7 +727,8 @@ def batch_export_pics(path=None,
                       ppi=DEFAULT_PPI,
                       background=(255, 255, 255, 255),
                       overwrite=False,
-                      font=None):
+                      font=None,
+                      track_selection=0):
     '''
     批量将path目录下的所有.mid和.emid文件转换为纸带设计稿图片
     如果path参数留空，则取当前工作目录
@@ -644,12 +739,31 @@ def batch_export_pics(path=None,
         extention = os.path.splitext(filename)[1]
         if extention == '.mid' or extention == '.emid':
             print('Converting %s ...' % filename)
-            export_pics(file=filename,
-                        papersize=papersize,
-                        ppi=ppi,
-                        background=background,
-                        overwrite=overwrite,
-                        font=font)
+            if(track_selection==-1):
+                export_pics(file=filename,
+                            papersize=papersize,
+                            ppi=ppi,
+                            background=background,
+                            overwrite=overwrite,
+                            font=font)
+            elif (track_selection==0):
+                i=1
+                while export_pics(file=filename,
+                            papersize=papersize,
+                            ppi=ppi,
+                            background=background,
+                            overwrite=overwrite,
+                            font=font,
+                            track_selection=i):
+                    i+=1
+            else:
+                export_pics(file=filename,
+                            papersize=papersize,
+                            ppi=ppi,
+                            background=background,
+                            overwrite=overwrite,
+                            font=font,
+                            track_selection=track_selection)
 
 
 if __name__ == '__main__':
@@ -663,4 +777,4 @@ if __name__ == '__main__':
     #             transposition=0,
     #             papersize=A4_VERTICAL,
     #             ppi=300)
-    batch_export_pics()#批量导出
+    batch_export_pics()  # 批量导出
