@@ -98,7 +98,7 @@ def export_pics(file,
                 musicname: str = None,
                 transposition: int = 0,
                 interpret_bpm: float = None,
-                scale: float = 1.0,
+                scale: float = 2.0,
                 heading: tuple = ('B站：Alex的八音盒', CENTER_ALIGN),
                 font: str = None,
                 papersize=AUTO_SIZE,
@@ -459,7 +459,10 @@ def export_pics(file,
     note_ref = note_ref.crop((left, upper, right, lower))
     # note_ref.show()
 
-    total_beats = 0
+    #统计总共小节数
+    total_bars = 0
+    #每小节的节拍数
+    beats_per_bar = 8
 
     for i in range(pages):
         test_pos = posconvert(size, ppi)
@@ -514,7 +517,7 @@ def export_pics(file,
             #        (startpos[0] + 70*j + 62 - pixel2mm(textsize[0], ppi),
             #         startpos[1] + 8*len(musicname) + 7 - pixel2mm(textsize[1], ppi)), ppi),
             #    text=str(colnum), font=font2, fill=(0, 0, 0, 150))
-            sign = "B站：Alex的八音盒"
+            sign = "B站： Alex的八音盒"
             sign1 = "sdbfe"
 
             # 水印*4/栏
@@ -567,9 +570,9 @@ def export_pics(file,
             for k in range(row + 1):
                 # if(j!=0 and k==0):
                 #     total_beats+=row
-                total_beats += 1
+                total_bars += 1
                 # 绘制小节标识和粘贴音名标识图
-                if (total_beats % 8 == 1):
+                if (total_bars % beats_per_bar == 1 and k!=row):
                     # 粘贴音名标识图
                     # if(COL_NO%9==0):
                     #    image0.paste(note_ref,posconvert((startpos[0] + 70*j + 2.5,startpos[1]+8*k+80)))
@@ -729,7 +732,7 @@ def batch_export_pics(path=None,
                       background=(255, 255, 255, 255),
                       overwrite=False,
                       font=None,
-                      track_selection=0):
+                      track_selection=-1):
     '''
     批量将path目录下的所有.mid和.emid文件转换为纸带设计稿图片
     如果path参数留空，则取当前工作目录

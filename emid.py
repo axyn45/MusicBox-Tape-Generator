@@ -80,6 +80,7 @@ class EmidFile:
         notelist = notestext.split('#')
         tracknamelist = tracksname.split(',')
         tracknamedict = {k: v for v, k in enumerate(tracknamelist)}
+        
         '添加空轨道'
         for trackname in tracknamelist:
             self.tracks.append(EmidTrack(trackname))
@@ -88,6 +89,10 @@ class EmidFile:
             MBnum, time, trackname = note.split(',')
             pitch = MBnum2pitch(int(MBnum))
             time = float(time)
+            
+            if trackname not in tracknamedict:
+                tracknamedict[trackname]=len(trackname)
+
             trackidx = tracknamedict[trackname]
             self.tracks[trackidx].add_note(pitch, time)
         '更新长度'
