@@ -98,7 +98,7 @@ def export_pics(file,
                 musicname: str = None,
                 transposition: int = 0,
                 interpret_bpm: float = None,
-                scale: float = 2.0,
+                scale: float = 1.0,
                 heading: tuple = ('B站：Alex的八音盒', CENTER_ALIGN),
                 font: str = None,
                 papersize=AUTO_SIZE,
@@ -285,9 +285,13 @@ def export_pics(file,
             # 页眉显示曲目名称
             heading = (os.path.splitext(file)[0]+ '_Track'+str(track_selection), aligntype)
         if musicname is None:
-            musicname = os.path.splitext(os.path.split(file)[1])[0]+ '_Track'+str(track_selection)
-            # 页眉显示曲目名称
-            heading = (os.path.splitext(os.path.split(file)[1])[0]+ '_Track'+str(track_selection), aligntype)
+            if track_selection>0:
+                musicname = os.path.splitext(os.path.split(file)[1])[0]+ '_Track'+str(track_selection)
+                # 页眉显示曲目名称
+                heading = (os.path.splitext(os.path.split(file)[1])[0]+ '_Track'+str(track_selection), aligntype)
+            else:
+                musicname = os.path.splitext(os.path.split(file)[1])[0]
+                heading = (os.path.splitext(os.path.split(file)[1])[0], aligntype)
             
         extention = os.path.splitext(file)[1]
         if extention == '.emid':
@@ -517,7 +521,7 @@ def export_pics(file,
             #        (startpos[0] + 70*j + 62 - pixel2mm(textsize[0], ppi),
             #         startpos[1] + 8*len(musicname) + 7 - pixel2mm(textsize[1], ppi)), ppi),
             #    text=str(colnum), font=font2, fill=(0, 0, 0, 150))
-            sign = "B站： Alex的八音盒"
+            sign = "B站：Alex的八音盒"
             sign1 = "sdbfe"
 
             # 水印*4/栏
@@ -610,7 +614,7 @@ def export_pics(file,
                                        endpos[1]), ppi),
                            fill=(0, 0, 0, 255), width=1)
 
-            total_beats -= 1
+            total_bars -= 1
         '分隔线'
         for j in range(col + 1 if i < pages - 1 else cols + 1):
             draw0.line(posconvert((startpos[0] + 70*j,
