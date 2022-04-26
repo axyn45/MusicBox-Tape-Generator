@@ -50,7 +50,7 @@ def posconvert(pos:tuple, ppi=DEFAULT_PPI):
 #     font1 = ImageFont.truetype(font, round(mm2pixel(3.4, DEFAULT_PPI)))
 #     font2 = ImageFont.truetype(font, round(mm2pixel(6, DEFAULT_PPI)))
 
-def beat_ref(Number):
+def bar_ref(Number):
     Number=str(Number)
     strlen=len(Number)
     img = Image.new('RGB', posconvert((strlen*1.5, 2.5)), color='#ffffff')
