@@ -92,7 +92,7 @@ def posconvert(pos, ppi=DEFAULT_PPI):
     x, y = pos
     return (round(mm2pixel(x, ppi) - 0.5), round(mm2pixel(y, ppi) - 0.5))
 
-def bar_ref(Number):   # 将音符转换为音符的编号，返回逆时针旋转90°的图像
+def bar_ref(Number):   # 返回小节编号逆时针旋转90°的图像
     Number=str(Number)
     strlen=len(Number)
     img = PIL.Image.new('RGB', posconvert((strlen*1.5, 2.5)), color='#ffffff')
