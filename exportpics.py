@@ -92,6 +92,16 @@ def posconvert(pos, ppi=DEFAULT_PPI):
     x, y = pos
     return (round(mm2pixel(x, ppi) - 0.5), round(mm2pixel(y, ppi) - 0.5))
 
+def bar_ref(Number):   # 将音符转换为音符的编号，返回逆时针旋转90°的图像
+    Number=str(Number)
+    strlen=len(Number)
+    img = PIL.Image.new('RGB', posconvert((strlen*1.5, 2.5)), color='#ffffff')
+    font = PIL.ImageFont.load_default()
+    font = PIL.ImageFont.truetype('C:\Windows\Fonts\msyh.ttc', 30)
+    draw=PIL.ImageDraw.Draw(img)
+    draw.text(posconvert((0,-0.5)), str(Number), font=font, fill=(0, 0, 0))
+    # img.show()
+    return img.rotate(90,PIL.Image.NEAREST,expand = 1)
 
 def export_pics(file,
                 filename: str = None,
@@ -379,7 +389,7 @@ def export_pics(file,
     # 统计已打印的note数量
     NOTE_COUNT = 0
     note_ref = PIL.Image.new('RGBA', posconvert(
-        (2*32, 2*32), ppi), (255, 255, 255, 255))
+        (2*12, 2*32), ppi), (255, 255, 255, 255))
     draw_ref = PIL.ImageDraw.Draw(note_ref)
 
     # 准备音名标识图片
@@ -453,14 +463,14 @@ def export_pics(file,
                   font=font_ref, fill=(28, 43, 255, 255))
     draw_ref.text(xy=posconvert((vp2, 60), ppi), text="E3",
                   font=font_ref, fill=(28, 43, 255, 255))
-
+    # note_ref.show()
     # 图片旋转90°
     note_ref = note_ref.rotate(angle=90)
     # 定义裁切点坐标
-    left, upper = posconvert((0, 40), ppi)
-    right, lower = posconvert((2*32, 2*32), ppi)
+    # left, upper = posconvert((0, 40), ppi)
+    # right, lower = posconvert((2*32, 2*32), ppi)
     # 裁切图片
-    note_ref = note_ref.crop((left, upper, right, lower))
+    # note_ref = note_ref.crop((left, upper, right, lower))
     # note_ref.show()
 
     #统计总共小节数
@@ -521,7 +531,7 @@ def export_pics(file,
             #        (startpos[0] + 70*j + 62 - pixel2mm(textsize[0], ppi),
             #         startpos[1] + 8*len(musicname) + 7 - pixel2mm(textsize[1], ppi)), ppi),
             #    text=str(colnum), font=font2, fill=(0, 0, 0, 150))
-            sign = "B站：Alex的八音盒"
+            sign = ""
             sign1 = "sdbfe"
 
             # 水印*4/栏
@@ -581,15 +591,18 @@ def export_pics(file,
                     # if(COL_NO%9==0):
                     #    image0.paste(note_ref,posconvert((startpos[0] + 70*j + 2.5,startpos[1]+8*k+80)))
                     # 绘制小节标识
-                    if(COL_NO < (10-1)):
-                        draw0.text(xy=posconvert((startpos[0] + 70*j + 6 + 2*28, startpos[1] + 8*k)), text=str(
-                            COL_NO+1), font=font0, fill=(0, 0, 0, 255))
-                    elif(COL_NO < 100):
-                        draw0.text(xy=posconvert((startpos[0] + 70*j + 6 + 2*27, startpos[1] + 8*k)), text=str(
-                            COL_NO+1), font=font0, fill=(0, 0, 0, 255))
-                    else:
-                        draw0.text(xy=posconvert((startpos[0] + 70*j + 6 + 2*26, startpos[1] + 8*k)), text=str(
-                            COL_NO+1), font=font0, fill=(0, 0, 0, 255))
+                    # bar_ref(COL_NO+1).show()
+                    image0.paste(bar_ref(COL_NO+1), posconvert((startpos[0] + 70*j + 10+2*27+0.5, startpos[1] + 8*k+1)))
+
+                    # if(COL_NO < (10-1)):
+                    #     draw0.text(xy=posconvert((startpos[0] + 70*j + 10 + 2*28, startpos[1] + 8*k)), text=str(
+                    #         COL_NO+1), font=font0, fill=(0, 0, 0, 255))
+                    # elif(COL_NO < 100):
+                    #     draw0.text(xy=posconvert((startpos[0] + 70*j + 10 + 2*27, startpos[1] + 8*k)), text=str(
+                    #         COL_NO+1), font=font0, fill=(0, 0, 0, 255))
+                    # else:
+                    #     draw0.text(xy=posconvert((startpos[0] + 70*j + 10 + 2*26, startpos[1] + 8*k)), text=str(
+                    #         COL_NO+1), font=font0, fill=(0, 0, 0, 255))
                     COL_NO += 1
 
                 # 绘制整拍横线
