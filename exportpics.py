@@ -361,6 +361,7 @@ def export_pics(file,
         for i in FONT_PATH:
             try:
                 font_ref = PIL.ImageFont.truetype(i, round(mm2pixel(2, ppi)))
+                font_ref2=PIL.ImageFont.truetype(i, round(mm2pixel(4, ppi)))
                 font0 = PIL.ImageFont.truetype(i, round(mm2pixel(3.3, ppi)))
                 font1 = PIL.ImageFont.truetype(i, round(mm2pixel(3.4, ppi)))
                 font2 = PIL.ImageFont.truetype(i, round(mm2pixel(6, ppi)))
@@ -389,83 +390,84 @@ def export_pics(file,
     # 统计已打印的note数量
     NOTE_COUNT = 0
     note_ref = PIL.Image.new('RGBA', posconvert(
-        (2*12, 2*32), ppi), (255, 255, 255, 255))
+        (2*20, 2*32), ppi), (255, 255, 255, 255))
     draw_ref = PIL.ImageDraw.Draw(note_ref)
 
     # 准备音名标识图片
     # vp for vertival position
-    vp1 = 2
-    vp2 = 8
-    vp3 = 14
-    vp4 = 20
+    vp1 = 3
+    vp2 = 13
+    vp3 = 23
+    vp4 =33
 
     # 绘制音名标识图片
     # 1~10
-    draw_ref.text(xy=posconvert((vp1, 2), ppi), text="C",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp2, 4), ppi), text="D",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp3, 6), ppi), text="G",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp4, 8), ppi), text="A",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp3, 10), ppi), text="B",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp2, 12), ppi), text="C1",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp1, 14), ppi), text="D1",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp2, 16), ppi), text="E1",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp3, 18), ppi), text="F1",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp4, 20), ppi), text="#F1",
-                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp1, 0), ppi), text="C",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2, 2), ppi), text="D",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp3, 4), ppi), text="G",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp4, 6), ppi), text="A",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp3, 8), ppi), text="B",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2, 10), ppi), text="C1",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp1, 12), ppi), text="D1",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2, 14), ppi), text="E1",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp3, 16), ppi), text="F1",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp4-2.6, 18), ppi), text="#F1",
+                  font=font_ref2, fill=(28, 43, 255, 255))
     # 11~20
-    draw_ref.text(xy=posconvert((vp3, 22), ppi), text="G1",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp2, 24), ppi), text="#G1",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp1, 26), ppi), text="A1",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp2, 28), ppi), text="#A1",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp3, 30), ppi), text="B1",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp4, 32), ppi), text="C2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp3, 34), ppi), text="#C2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp2, 36), ppi), text="D2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp1, 38), ppi), text="#D2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp2, 40), ppi), text="E2",
-                  font=font_ref, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp3, 20), ppi), text="G1",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2-2.6, 22), ppi), text="#G1",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp1, 24), ppi), text="A1",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2-2.6, 26), ppi), text="#A1",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp3, 28), ppi), text="B1",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp4, 30), ppi), text="C2",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp3-2.6, 32), ppi), text="#C2",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2, 34), ppi), text="D2",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp1-2.6, 36), ppi), text="#D2",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2, 38), ppi), text="E2",
+                  font=font_ref2, fill=(28, 43, 255, 255))
     # 21~30
-    draw_ref.text(xy=posconvert((vp3, 42), ppi), text="F2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp4, 44), ppi), text="#F2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp3, 46), ppi), text="G2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp2, 48), ppi), text="#G2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp1, 50), ppi), text="A2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp2, 52), ppi), text="#A2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp3, 54), ppi), text="B2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp4, 56), ppi), text="C3",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp3, 58), ppi), text="D3",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    draw_ref.text(xy=posconvert((vp2, 60), ppi), text="E3",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    # note_ref.show()
+    draw_ref.text(xy=posconvert((vp3, 40), ppi), text="F2",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp4-2.6, 42), ppi), text="#F2",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp3, 44), ppi), text="G2",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2-2.6, 46), ppi), text="#G2",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp1, 48), ppi), text="A2",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2-2.6, 50), ppi), text="#A2",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp3, 52), ppi), text="B2",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp4, 54), ppi), text="C3",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp3, 56), ppi), text="D3",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    draw_ref.text(xy=posconvert((vp2, 58), ppi), text="E3",
+                  font=font_ref2, fill=(28, 43, 255, 255))
+    
     # 图片旋转90°
-    note_ref = note_ref.rotate(angle=90)
+    note_ref = note_ref.rotate(angle=90,expand=1)
+    # note_ref.show()
     # 定义裁切点坐标
     # left, upper = posconvert((0, 40), ppi)
     # right, lower = posconvert((2*32, 2*32), ppi)
@@ -588,8 +590,8 @@ def export_pics(file,
                 # 绘制小节标识和粘贴音名标识图
                 if (total_bars % beats_per_bar == 1 and k!=row):
                     # 粘贴音名标识图
-                    # if(COL_NO%9==0):
-                    #    image0.paste(note_ref,posconvert((startpos[0] + 70*j + 2.5,startpos[1]+8*k+80)))
+                    if(COL_NO%9==0):
+                       image0.paste(note_ref,posconvert((startpos[0] + 70*j + 3.1,startpos[1]+8*k+80)))
                     # 绘制小节标识
                     # bar_ref(COL_NO+1).show()
                     image0.paste(bar_ref(COL_NO+1), posconvert((startpos[0] + 70*j + 10+2*27+0.5, startpos[1] + 8*k+1)))
