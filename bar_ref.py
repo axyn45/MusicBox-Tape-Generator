@@ -1,6 +1,7 @@
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
+from util import posconvert
 
 def bar_ref(Number):   # 返回小节编号逆时针旋转90°的图像
     Number = str(Number)
