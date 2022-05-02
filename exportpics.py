@@ -25,234 +25,12 @@ from matplotlib.pyplot import fill
 from matplotlib.style import available
 import mido
 import emid
+from util import*
+import bar_ref
+import note_ref
 import notecounter as nct
 from collections import OrderedDict
 
-
-PITCH_TO_MBNUM_30 = {93: 29, 91: 28, 89: 27, 88: 26, 87: 25, 86: 24, 85: 23, 84: 22,
-                  83: 21, 82: 20, 81: 19, 80: 18, 79: 17, 78: 16, 77: 15, 76: 14,
-                  75: 13, 74: 12, 73: 11, 72: 10, 71: 9, 70: 8, 69: 7, 67: 6,
-                  65: 5, 64: 4, 62: 3, 60: 2, 55: 1, 53: 0}
-
-PITCH_TO_MBNUM_15 = {56: 0, 58: 1, 60: 2, 61: 3, 63: 4, 65: 5,
-                     67: 6, 68: 7, 70: 8, 72: 9, 73: 10, 75: 11, 77: 12, 79: 13, 80: 14}
-
-prev_time_30 = {93: -8, 91: -8, 89: -8, 88: -8, 87: -8, 86: -8, 85: -8, 84: -8,
-                     83: -8, 82: -8, 81: -8, 80: -8, 79: -8, 78: -8, 77: -8, 76: -8,
-                     75: -8, 74: -8, 73: -8, 72: -8, 71: -8, 70: -8, 69: -8, 67: -8,
-                     65: -8, 64: -8, 62: -8, 60: -8, 55: -8, 53: -8}
-
-prev_time_15 = {56: -8, 58: -8, 60: -8, 61: -8, 63: -8, 65: -8,
-                     67: -8, 68: -8, 70: -8, 72: -8, 73: -8, 75: -8, 77: -8, 79: -8, 80: -8}
-
-LEFT_ALIGN = 0
-CENTER_ALIGN = 1
-RIGHT_ALIGN = 2
-
-A4_VERTICAL_30 = 25
-A4_HORIZONAL = 24
-A3_VERTICAL = 23
-A3_HORIZONAL = 22
-A4_VERTICAL_15 = 21
-
-B5_VERTICAL = 43
-B5_HORIZONAL = 42
-B4_VERTICAL = 41
-B4_HORIZONAL = 40
-AUTO_SIZE = 0
-TEST_SIZE = 1
-
-PAPER_INFO = {A4_VERTICAL_30: {'size': (210, 297), 'col': 3, 'row': 35},
-              A4_VERTICAL_15: {'size': (210, 297), 'col': 5, 'row': 35},
-              A4_HORIZONAL: {'size': (297, 210), 'col': 4, 'row': 24},
-              A3_VERTICAL: {'size': (297, 420), 'col': 4, 'row': 50},
-              A3_HORIZONAL: {'size': (420, 297), 'col': 6, 'row': 35},
-              B5_VERTICAL: {'size': (176, 250), 'col': 2, 'row': 29},
-              B5_HORIZONAL: {'size': (250, 176), 'col': 3, 'row': 20},
-              B4_VERTICAL: {'size': (250, 353), 'col': 3, 'row': 42},
-              B4_HORIZONAL: {'size': (353, 250), 'col': 5, 'row': 29},
-              TEST_SIZE: {'size': (70, 4000), 'col': 1, 'row': 420}}
-
-FONT_PATH = [
-    'C:\\Users\\' + os.getlogin() +
-    r'\AppData\Local\Microsoft\Windows\Fonts\SourceHanSansSC-Regular.otf',  # 思源黑体
-    r'C:\Windows\Fonts\msyh.ttc',  # 微软雅黑
-    r'C:\Windows\Fonts\simsun.ttc'  # 宋体
-]
-
-DEFAULT_PPI = 300.0  # 默认ppi
-INCH_TO_MM = 25.4  # 1英寸=25.4毫米
-
-DOT_R = 1.14  # 圆点半径（单位毫米）
-BORDER = 3.0  # 边框宽度（单位毫米）
-ANTI_ALIAS = 1  # 抗锯齿缩放倍数
-
-
-def _find_latest_event(l, t):
-    i = len(l) - 1
-    while l[i][1] > t:
-        i -= 1
-    return i
-
-
-def mm2pixel(x, ppi=DEFAULT_PPI):
-    return x / INCH_TO_MM * ppi
-
-
-def pixel2mm(x, ppi=DEFAULT_PPI):
-    return x * INCH_TO_MM / ppi
-
-
-def posconvert(pos, ppi=DEFAULT_PPI):
-    x, y = pos
-    return (round(mm2pixel(x, ppi) - 0.5), round(mm2pixel(y, ppi) - 0.5))
-
-
-def bar_ref(Number):   # 返回小节编号逆时针旋转90°的图像
-    Number = str(Number)
-    strlen = len(Number)
-    img = PIL.Image.new('RGB', posconvert((strlen*1.5, 2.5)), color='#ffffff')
-    font = PIL.ImageFont.load_default()
-    font = PIL.ImageFont.truetype('C:\Windows\Fonts\msyh.ttc', 30)
-    draw = PIL.ImageDraw.Draw(img)
-    draw.text(posconvert((0, -0.5)), str(Number), font=font, fill=(0, 0, 0))
-    # img.show()
-    return img.rotate(90, PIL.Image.NEAREST, expand=1)
-
-def note_ref(is30=True,font=None,ppi=DEFAULT_PPI):
-    if font is None:  # 在FONT_PATH中寻找第一个能使用的字体
-        for i in FONT_PATH:
-            try:
-                font_ref = PIL.ImageFont.truetype(i, round(mm2pixel(4, ppi)))
-            except:
-                pass
-            else:
-                break
-    else:
-        font_ref = PIL.ImageFont.truetype(font, round(i, round(mm2pixel(4, ppi))))
-
-    lx=2*10+1 if is30 else 2*8+1
-    ly=2*32 if is30 else 2*19-1
-    ref = PIL.Image.new('RGBA', posconvert(
-        (lx, ly), ppi), (255, 255, 255, 255))
-    draw_ref = PIL.ImageDraw.Draw(ref)
-
-    # 准备音名标识图片
-    # vp for vertival position
-    vp1 = 3
-    vp2 = 14 if is30 else 11
-    vp3 = vp1
-    vp4 = vp2
-
-    # 绘制音名标识图片
-    if is30:
-        # 1~10
-        draw_ref.text(xy=posconvert((vp1, 0), ppi), text="C",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp2, 2), ppi), text="D",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp3, 4), ppi), text="G",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp4, 6), ppi), text="A",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp3, 8), ppi), text="B",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp2, 10), ppi), text="C1",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp1, 12), ppi), text="D1",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp2, 14), ppi), text="E1",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp3, 16), ppi), text="F1",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp4-2.6, 18), ppi), text="#F1",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        # 11~20
-        draw_ref.text(xy=posconvert((vp3, 20), ppi), text="G1",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp2-2.6, 22), ppi), text="#G1",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp1, 24), ppi), text="A1",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp2-2.6, 26), ppi), text="#A1",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp3, 28), ppi), text="B1",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp4, 30), ppi), text="C2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp3-2.6, 32), ppi), text="#C2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp2, 34), ppi), text="D2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp1-2.6, 36), ppi), text="#D2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp2, 38), ppi), text="E2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        # 21~30
-        draw_ref.text(xy=posconvert((vp3, 40), ppi), text="F2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp4-2.6, 42), ppi), text="#F2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp3, 44), ppi), text="G2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp2-2.6, 46), ppi), text="#G2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp1, 48), ppi), text="A2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp2-2.6, 50), ppi), text="#A2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp3, 52), ppi), text="B2",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp4, 54), ppi), text="C3",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp3, 56), ppi), text="D3",
-                  font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp2, 58), ppi), text="E3",
-                  font=font_ref, fill=(28, 43, 255, 255))
-    else:
-        # 1~10
-        draw_ref.text(xy=posconvert((vp1, 2), ppi), text="C",
-                    font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp2, 4), ppi), text="D",
-                    font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp3, 6), ppi), text="E",
-                    font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp4, 8), ppi), text="F",
-                    font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp3, 10), ppi), text="G",
-                    font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp2, 12), ppi), text="A",
-                    font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp1, 14), ppi), text="B",
-                    font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp2, 16), ppi), text="C1",
-                    font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp3, 18), ppi), text="D1",
-                    font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp4, 20), ppi), text="E1",
-                    font=font_ref, fill=(28, 43, 255, 255))
-        # 11~15
-        draw_ref.text(xy=posconvert((vp3, 22), ppi), text="F1",
-                    font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp2, 24), ppi), text="G1",
-                    font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp1, 26), ppi), text="A1",
-                    font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp2, 28), ppi), text="B1",
-                    font=font_ref, fill=(28, 43, 255, 255))
-        draw_ref.text(xy=posconvert((vp3, 30), ppi), text="C2",
-                    font=font_ref, fill=(28, 43, 255, 255))
-
-    # ref.show()
-    # 图片旋转90°
-    ref = ref.rotate(angle=90,expand=1)
-    # 定义裁切点坐标
-    # left, upper = posconvert((0, 40), ppi)
-    # right, lower = posconvert((2*32, 2*32), ppi)
-    # 裁切图片
-    # note_ref = note_ref.crop((left, upper, right, lower))
-    # note_ref.show()
-    return ref
 
 
 def export_pics(file,
@@ -371,7 +149,7 @@ def export_pics(file,
                                 if interpret_bpm is None:
                                     beat = miditime / ticks_per_beat
                                 else:
-                                    i = _find_latest_event(
+                                    i = find_latest_event(
                                         tempo_events, miditime)
                                     tempo, tick = tempo_events[i]
                                     realtime = time_passed[i] + mido.tick2second(
@@ -414,7 +192,7 @@ def export_pics(file,
                                 if interpret_bpm is None:
                                     beat = miditime / ticks_per_beat
                                 else:
-                                    i = _find_latest_event(
+                                    i = find_latest_event(
                                         tempo_events, miditime)
                                     tempo, tick = tempo_events[i]
                                     realtime = time_passed[i] + mido.tick2second(
