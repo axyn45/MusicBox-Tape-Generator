@@ -95,9 +95,33 @@ def export_pics(file,
     函数返回包含若干PIL.Image.Image实例的list
     '''
 
+    if papersize == AUTO_SIZE:  # 计算纸张大小
+        col = 1
+        row = math.floor(length / 8) + 1
+        size = (70, row * 8 + 20)
+        pages = 1
+        cols = 1
+    else:
+        if type(papersize) == int:
+            papersize = PAPER_INFO[papersize]
+        col = papersize['col']
+        row = papersize['row']
+        size = papersize['size']
+        pages = math.floor(length / (col * row * 8)) + 1  # 计算页数
+        # 计算最后一页的栏数
+        cols = math.floor(length / (row * 8)) - (pages - 1) * col + 1
+
     total_notes = 30 if is_30_note else 15
     col_offset = 70 if is_30_note else 40
     internote_spacing=2*29 if is_30_note else 2*14
+
+    contentsize = (col_offset * col, 8 * row)
+    startpos = (size[0] / 2 - contentsize[0] / 2,
+                size[1] / 2 - contentsize[1] / 2)
+    endpos = (size[0] / 2 + contentsize[0] / 2,
+              size[1] / 2 + contentsize[1] / 2)  # 计算坐标
+
+
 
     # PITCH_TO_MBNUM=PITCH_TO_MBNUM_30 if is_30_note else PITCH_TO_MBNUM_15
    
@@ -160,27 +184,7 @@ def export_pics(file,
         isSuccessful = False
         return isSuccessful
 
-    if papersize == AUTO_SIZE:  # 计算纸张大小
-        col = 1
-        row = math.floor(length / 8) + 1
-        size = (70, row * 8 + 20)
-        pages = 1
-        cols = 1
-    else:
-        if type(papersize) == int:
-            papersize = PAPER_INFO[papersize]
-        col = papersize['col']
-        row = papersize['row']
-        size = papersize['size']
-        pages = math.floor(length / (col * row * 8)) + 1  # 计算页数
-        # 计算最后一页的栏数
-        cols = math.floor(length / (row * 8)) - (pages - 1) * col + 1
-
-    contentsize = (col_offset * col, 8 * row)
-    startpos = (size[0] / 2 - contentsize[0] / 2,
-                size[1] / 2 - contentsize[1] / 2)
-    endpos = (size[0] / 2 + contentsize[0] / 2,
-              size[1] / 2 + contentsize[1] / 2)  # 计算坐标
+    
 
     if font is None:  # 在FONT_PATH中寻找第一个能使用的字体
         for i in FONT_PATH:
