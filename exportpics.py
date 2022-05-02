@@ -25,9 +25,11 @@ from matplotlib.pyplot import fill
 from matplotlib.style import available
 import mido
 import emid
+from process_midifile import process_midifile
+from process_emidfile import process_emidfile
 from util import*
-import bar_ref
-import note_ref
+from bar_ref import bar_ref
+from note_ref import note_ref
 import notecounter as nct
 from collections import OrderedDict
 
@@ -97,125 +99,8 @@ def export_pics(file,
     col_offset = 70 if is_30_note else 40
     internote_spacing=2*29 if is_30_note else 2*14
 
-    PITCH_TO_MBNUM=PITCH_TO_MBNUM_30 if is_30_note else PITCH_TO_MBNUM_15
+    # PITCH_TO_MBNUM=PITCH_TO_MBNUM_30 if is_30_note else PITCH_TO_MBNUM_15
    
-    def process_emidfile(emidfile, transposition=transposition):
-        '处理emid文件'
-        
-        notes = []
-        for track in emidfile.tracks:
-            for note in track:
-                pitch, time = note
-                if pitch + transposition in PITCH_TO_MBNUM:
-                    notes.append(
-                        [PITCH_TO_MBNUM[pitch + transposition], float(time * scale)])
-        notes.sort(key=lambda a: (a[1], a[0]))
-        length = notes[-1][1]
-        return notes, length
-
-    def process_midifile(midifile, transposition=transposition):
-        '处理midi文件'
-        ticks_per_beat = midifile.ticks_per_beat
-
-        notes = []
-        prev_time = prev_time_30 if is_30_note else prev_time_15
-
-        if interpret_bpm is not None:
-            tempo_events = []
-            time_passed = []
-            for track in midifile.tracks:
-                miditime = 0
-                for msg in track:
-                    miditime += msg.time
-                    if msg.type == 'set_tempo':
-                        tempo_events.append((msg.tempo, miditime))
-
-            realtime = 0.0
-            for i in range(len(tempo_events)):
-                tempo = 0 if i == 0 else tempo_events[i-1][0]
-                delta_miditime = tempo_events[i][1] - tempo_events[i-1][1]
-                realtime += mido.tick2second(delta_miditime,
-                                             ticks_per_beat, tempo)
-                time_passed.append(realtime)
-        if track_selection == -1:
-            for track in midifile.tracks:
-                miditime = 0
-                for msg in track:
-                    miditime += msg.time
-                    if msg.type == 'note_on':
-                        if msg.velocity > 0:
-                            pitch = msg.note + transposition
-                            if pitch in PITCH_TO_MBNUM:
-                                if interpret_bpm is None:
-                                    beat = miditime / ticks_per_beat
-                                else:
-                                    i = find_latest_event(
-                                        tempo_events, miditime)
-                                    tempo, tick = tempo_events[i]
-                                    realtime = time_passed[i] + mido.tick2second(
-                                        miditime - tick, ticks_per_beat, tempo)
-                                    beat = realtime / 60 * interpret_bpm  # 计算beat
-
-                                time = beat * 8 * scale
-                                # if time - prev_time[pitch] >= 8:
-                                prev_time[pitch] = time
-                                notes.append([PITCH_TO_MBNUM[pitch],
-                                              time])  # 添加note
-                                # else:  # 如果音符过近，则直接忽略该音符
-                                #    print(
-                                #        f'[WARN] Too Near! Note {pitch} in bar {math.floor(miditime / ticks_per_beat / 4) + 1}')
-                            else:  # 如果超出音域
-                                print(
-                                    f'[WARN] Note {pitch} in bar {math.floor(miditime / ticks_per_beat / 4) + 1} is out of range')
-        else:
-            noInfoTrackCount = 0
-            for track in midifile.tracks:
-                if track.name == '':
-                    noInfoTrackCount += 1
-                    continue
-            if(len(midifile.tracks)-noInfoTrackCount < track_selection):
-                return None, None
-            i = 1
-            for track in midifile.tracks:
-                if track.name == '':
-                    continue
-                elif i != track_selection:
-                    i += 1
-                    continue
-                miditime = 0
-                for msg in track:
-                    miditime += msg.time
-                    if msg.type == 'note_on':
-                        if msg.velocity > 0:
-                            pitch = msg.note + transposition
-                            if pitch in PITCH_TO_MBNUM:
-                                if interpret_bpm is None:
-                                    beat = miditime / ticks_per_beat
-                                else:
-                                    i = find_latest_event(
-                                        tempo_events, miditime)
-                                    tempo, tick = tempo_events[i]
-                                    realtime = time_passed[i] + mido.tick2second(
-                                        miditime - tick, ticks_per_beat, tempo)
-                                    beat = realtime / 60 * interpret_bpm  # 计算beat
-
-                                time = beat * 8 * scale
-                                # if time - prev_time[pitch] >= 8:
-                                prev_time[pitch] = time
-                                notes.append([PITCH_TO_MBNUM[pitch],
-                                              time])  # 添加note
-                                # else:  # 如果音符过近，则直接忽略该音符
-                                #    print(
-                                #        f'[WARN] Too Near! Note {pitch} in bar {math.floor(miditime / ticks_per_beat / 4) + 1}')
-                            else:  # 如果超出音域
-                                print(
-                                    f'[WARN] Note {pitch} in bar {math.floor(miditime / ticks_per_beat / 4) + 1} is out of range')
-                break
-        notes.sort(key=lambda a: (a[1], a[0]))  # 按time排序
-        notes = [i for n, i in enumerate(notes) if i not in notes[:n]]
-        length = notes[-1][1]
-        return notes, length
-
     print('Processing Data...')
     '打开文件以及处理默认值'
     typ = type(file)
@@ -250,7 +135,7 @@ def export_pics(file,
             notes, length = process_emidfile(emid.mido.MidiFile(file))
             NOTES_SUM, TAPE_LENGTH = nct.notes_and_length(filename)
         elif extention == '.mid':
-            notes, length = process_midifile(mido.MidiFile(file))
+            notes, length = process_midifile(mido.MidiFile(file),transposition=transposition,scale=scale,track_selection=track_selection,is30=is_30_note,interpret_bpm=interpret_bpm)
             NOTES_SUM, TAPE_LENGTH = nct.notes_and_length(mido.MidiFile(file))
         else:
             raise(ValueError('Unknown file extention (\'.mid\' or \'.emid\' required)'))
@@ -264,7 +149,7 @@ def export_pics(file,
         if typ == emid.EmidFile:
             notes, length = process_emidfile(file)
         else:
-            notes, length = process_midifile(file)
+            notes, length = process_midifile(file,transposition=transposition,scale=scale,track_selection=track_selection,is30=is_30_note,interpret_bpm=interpret_bpm)
 
     else:
         raise(ValueError(
@@ -300,8 +185,8 @@ def export_pics(file,
     if font is None:  # 在FONT_PATH中寻找第一个能使用的字体
         for i in FONT_PATH:
             try:
-                font_ref = PIL.ImageFont.truetype(i, round(mm2pixel(2, ppi)))
-                font_ref2=PIL.ImageFont.truetype(i, round(mm2pixel(4, ppi)))
+                # font_ref = PIL.ImageFont.truetype(i, round(mm2pixel(2, ppi)))
+                # font_ref2=PIL.ImageFont.truetype(i, round(mm2pixel(4, ppi)))
                 font0 = PIL.ImageFont.truetype(i, round(mm2pixel(3.3, ppi)))
                 font1 = PIL.ImageFont.truetype(i, round(mm2pixel(3.4, ppi)))
                 font2 = PIL.ImageFont.truetype(i, round(mm2pixel(6, ppi)))
@@ -613,7 +498,9 @@ def batch_export_pics(path=None,
                       overwrite=False,
                       font=None,
                       track_selection=-1,
-                      is_30_note=True):
+                      is_30_note=True,
+                      scale=1,
+                      transposition=0):
     '''
     批量将path目录下的所有.mid和.emid文件转换为纸带设计稿图片
     如果path参数留空，则取当前工作目录
@@ -632,7 +519,9 @@ def batch_export_pics(path=None,
                             background=background,
                             overwrite=overwrite,
                             font=font,
-                            is_30_note=is_30_note)
+                            is_30_note=is_30_note,
+                            scale=scale,
+                            transposition=transposition)
             elif (track_selection == 0):
                 i = 1
                 while export_pics(file=filename,
@@ -642,7 +531,9 @@ def batch_export_pics(path=None,
                                   overwrite=overwrite,
                                   font=font,
                                   track_selection=i,
-                                  is_30_note=is_30_note):
+                                  is_30_note=is_30_note,
+                                  scale=scale,
+                                  transposition=transposition):
                     i += 1
             else:
                 export_pics(file=filename,
@@ -652,7 +543,9 @@ def batch_export_pics(path=None,
                             overwrite=overwrite,
                             font=font,
                             track_selection=track_selection,
-                            is_30_note=is_30_note)
+                            is_30_note=is_30_note,
+                            scale=scale,
+                            transposition=transposition)
 
 
 if __name__ == '__main__':
