@@ -34,6 +34,8 @@ from note_ref import note_ref
 import notecounter as nct
 from collections import OrderedDict
 
+from watermark import watermark_a
+
 
 
 def export_pics(file,
@@ -284,28 +286,28 @@ def export_pics(file,
             #    text=str(colnum), font=font2, fill=(0, 0, 0, 150))
             sign = ""
             sign1 = "sdbfe"
-
+            image0.paste(watermark_a(),posconvert((-120,-250)))
             # 水印*4/栏
-            draw0.text(
-                xy=posconvert(
-                    (kp.startpos[0] + kp.col_offset*j + 15 - pixel2mm(textsize[0], ppi),
-                     kp.startpos[1] + 8*len(musicname)-120 - pixel2mm(textsize[1], ppi)), ppi),
-                text=sign, font=font2, fill=(0, 0, 0, 40))
-            draw0.text(
-                xy=posconvert(
-                    (kp.startpos[0] + kp.col_offset*j + 15 - pixel2mm(textsize[0], ppi),
-                     kp.startpos[1] + 8*len(musicname)-70 - pixel2mm(textsize[1], ppi)), ppi),
-                text=sign, font=font2, fill=(0, 0, 0, 40))
-            draw0.text(
-                xy=posconvert(
-                    (kp.startpos[0] + kp.col_offset*j + 15 - pixel2mm(textsize[0], ppi),
-                     kp.startpos[1] + 8*len(musicname)-20 - pixel2mm(textsize[1], ppi)), ppi),
-                text=sign, font=font2, fill=(0, 0, 0, 40))
-            draw0.text(
-                xy=posconvert(
-                    (kp.startpos[0] + kp.col_offset*j + 15 - pixel2mm(textsize[0], ppi),
-                     kp.startpos[1] + 8*len(musicname)+30 - pixel2mm(textsize[1], ppi)), ppi),
-                text=sign, font=font2, fill=(0, 0, 0, 40))
+            # draw0.text(
+            #     xy=posconvert(
+            #         (kp.startpos[0] + kp.col_offset*j + 15 - pixel2mm(textsize[0], ppi),
+            #          kp.startpos[1] + 8*len(musicname)-120 - pixel2mm(textsize[1], ppi)), ppi),
+            #     text=sign, font=font2, fill=(0, 0, 0, 40))
+            # draw0.text(
+            #     xy=posconvert(
+            #         (kp.startpos[0] + kp.col_offset*j + 15 - pixel2mm(textsize[0], ppi),
+            #          kp.startpos[1] + 8*len(musicname)-70 - pixel2mm(textsize[1], ppi)), ppi),
+            #     text=sign, font=font2, fill=(0, 0, 0, 40))
+            # draw0.text(
+            #     xy=posconvert(
+            #         (kp.startpos[0] + kp.col_offset*j + 15 - pixel2mm(textsize[0], ppi),
+            #          kp.startpos[1] + 8*len(musicname)-20 - pixel2mm(textsize[1], ppi)), ppi),
+            #     text=sign, font=font2, fill=(0, 0, 0, 40))
+            # draw0.text(
+            #     xy=posconvert(
+            #         (kp.startpos[0] + kp.col_offset*j + 15 - pixel2mm(textsize[0], ppi),
+            #          kp.startpos[1] + 8*len(musicname)+30 - pixel2mm(textsize[1], ppi)), ppi),
+            #     text=sign, font=font2, fill=(0, 0, 0, 40))
             #################################################
             draw0.text(
                 xy=posconvert(

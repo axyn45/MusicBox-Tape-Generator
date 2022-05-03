@@ -2,41 +2,48 @@ from util import *
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
+from math import sqrt
 
 
 
-content='Alex的八音盒'
 
 # draw one tilted watermark at center of each col
-def watermark_a(PAPER_SIZE=A4_VERTICAL_30,font=None,ppi=DEFAULT_PPI,is30=True):
-    if font is None:  # 在FONT_PATH中寻找第一个能使用的字体
-        for i in FONT_PATH:
-            try:
-                font = PIL.ImageFont.truetype(i, round(mm2pixel(24, ppi)))
-            except:
-                pass
-            else:
-                break
-    else:
-        font = PIL.ImageFont.truetype(font, round(mm2pixel(12, ppi)))
+def watermark_a(content='Alex'):
+    PAPER_SIZE=A4_VERTICAL_30
+    ppi=DEFAULT_PPI
+    
+    for i in FONT_PATH:
+        try:
+            font = PIL.ImageFont.truetype(i, round(mm2pixel(20, ppi)))
+        except:
+            pass
+        else:
+            break
 
-    vertical_space=200
-    horizontal_space=60
+    
+    vertical_space=50
+    horizontal_space=sqrt(3)*vertical_space
 
-    if is30:
-        size1,size2=PAPER_INFO[A4_VERTICAL_30]['size']
-        size=(size1*2,size2*2)
-        wm=PIL.Image.new('RGBA', posconvert(size, ppi), (255, 255, 255, 255))
-        draw=PIL.ImageDraw.Draw(wm)
-        x=0
-        y=0
-        while(y<size[1]):
-            while(x<size[0]):
-                draw.text(xy=posconvert((x, y)),text=content, font=font, fill=(0, 0, 0, 40))
-                x+=vertical_space
-            y+=horizontal_space
-            x=y%vertical_space-vertical_space
-        wm.show()
+    size1,size2=PAPER_INFO[A4_VERTICAL_30]['size']
+    size=(size1*2,size2*2)
+    wm=PIL.Image.new('RGBA', posconvert(size, ppi), (255, 255, 255, 255))
+    draw=PIL.ImageDraw.Draw(wm)
+    x=0
+    y=0
+
+    h1=horizontal_space
+    h2=vertical_space#horizontal_space%vertical_space
+    h1=sqrt(3)*h2
+
+    while(y<size[1]):
+        while(x<size[0]):
+            draw.text(xy=posconvert((x, y)),text=content, font=font, fill=(0, 0, 0, 40))
+            x+=horizontal_space
+        y+=vertical_space
+        x=y%horizontal_space-horizontal_space
+    wm=wm.rotate(angle=-30,expand=1)
+    wm.show()
+    return wm
 
 
 # test
