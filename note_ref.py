@@ -19,7 +19,7 @@ def note_ref(is30=True,font=None,ppi=DEFAULT_PPI):
     lx=2*10+1 if is30 else 2*8+1
     ly=2*32 if is30 else 2*19-1
     ref = PIL.Image.new('RGBA', posconvert(
-        (lx, ly), ppi), (255, 255, 255, 255))
+        (lx, ly), ppi), (0, 0, 0, 0))
     draw_ref = PIL.ImageDraw.Draw(ref)
 
     # 准备音名标识图片

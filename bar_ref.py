@@ -6,7 +6,7 @@ from util import posconvert
 def bar_ref(Number):   # 返回小节编号逆时针旋转90°的图像
     Number = str(Number)
     strlen = len(Number)
-    img = PIL.Image.new('RGB', posconvert((strlen*1.5, 2.5)), color='#ffffff')
+    img = PIL.Image.new('RGBA', posconvert((strlen*1.5, 2.5)), (0, 0, 0, 0))
     font = PIL.ImageFont.load_default()
     font = PIL.ImageFont.truetype('C:\Windows\Fonts\msyh.ttc', 30)
     draw = PIL.ImageDraw.Draw(img)

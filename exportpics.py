@@ -14,6 +14,7 @@ FairyMusicBox系列软件作者：bilibili@调皮的码农
 *使用前请务必了解可能造成的后果
 *请备份重要文件！
 '''
+from asyncio.windows_events import CONNECT_PIPE_INIT_DELAY
 import os
 import math
 from tkinter import Image
@@ -284,8 +285,8 @@ def export_pics(file,
             #        (startpos[0] + col_offset*j + 62 - pixel2mm(textsize[0], ppi),
             #         startpos[1] + 8*len(musicname) + 7 - pixel2mm(textsize[1], ppi)), ppi),
             #    text=str(colnum), font=font2, fill=(0, 0, 0, 150))
-            sign = ""
-            sign1 = "sdbfe"
+            # sign = ""
+            # sign1 = "sdbfe"
             image0.paste(watermark_a(),posconvert((-120,-250)))
             # 水印*4/栏
             # draw0.text(
@@ -309,11 +310,11 @@ def export_pics(file,
             #          kp.startpos[1] + 8*len(musicname)+30 - pixel2mm(textsize[1], ppi)), ppi),
             #     text=sign, font=font2, fill=(0, 0, 0, 40))
             #################################################
-            draw0.text(
-                xy=posconvert(
-                    (kp.startpos[0] + kp.col_offset*j + 15 - pixel2mm(textsize[0], ppi),
-                     kp.startpos[1] + 8*len(musicname) + 80 - pixel2mm(textsize[1], ppi)), ppi),
-                text=sign, font=font2, fill=(0, 0, 0, 40))
+            # draw0.text(
+            #     xy=posconvert(
+            #         (kp.startpos[0] + kp.col_offset*j + 15 - pixel2mm(textsize[0], ppi),
+            #          kp.startpos[1] + 8*len(musicname) + 80 - pixel2mm(textsize[1], ppi)), ppi),
+            #     text=sign, font=font2, fill=(0, 0, 0, 40))
             # draw0.text(
             #     xy=posconvert(
             #         (kp.startpos[0] + kp.col_offset*j + 15 - pixel2mm(textsize[0], ppi),
@@ -343,11 +344,12 @@ def export_pics(file,
                     # 粘贴音名标识图
                     ref_horizontal_offset=kp.col_offset*j + 3.35 if is_30_note else kp.col_offset*j +1.35
                     if(COL_NO%9==0):
-                        image0.paste(note_ref(is_30_note),posconvert((kp.startpos[0] + ref_horizontal_offset,kp.startpos[1]+8*k+80)))
+                        nr=note_ref(is_30_note)
+                        image0.paste(nr,posconvert((kp.startpos[0] + ref_horizontal_offset,kp.startpos[1]+8*k+80)),mask=nr)
                     # 绘制小节标识
                     # bar_ref(COL_NO+1).show()
-                    image0.paste(bar_ref(
-                        COL_NO+1), posconvert((kp.startpos[0] + kp.col_offset*j + 6.5+kp.internote_spacing, kp.startpos[1] + 8*k+1)))
+                    br=bar_ref(COL_NO+1)
+                    image0.paste(br, posconvert((kp.startpos[0] + kp.col_offset*j + 6.5+kp.internote_spacing, kp.startpos[1] + 8*k+1)), mask=br)
 
                     # if(COL_NO < (10-1)):
                     #     draw0.text(xy=posconvert((startpos[0] + col_offset*j + 10 + 2*28, startpos[1] + 8*k)), text=str(
@@ -494,6 +496,7 @@ def export_pics(file,
             if not overwrite:
                 save_path = emid.find_available_filename(save_path)
             print(f'Exporting pics ({pagenum + 1} of {pages})...')
+            # cpimage.show()
             cpimage.save(save_path, dpi=(300, 300))
         result.append(cpimage)
 
