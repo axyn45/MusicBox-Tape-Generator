@@ -58,13 +58,20 @@ BORDER = 3.0  # 边框宽度（单位毫米）
 ANTI_ALIAS = 1  # 抗锯齿缩放倍数
 
 class KeyParams:
-    
     total_notes = None
     col_offset = None
     internote_spacing = None
     contentsize = None
     startpos = None
     endpos = None
+
+NOTE_SUM=0
+LENGTH=0
+
+class NoteInfo:
+    page = None
+    coln = None
+    rowmm = None
 
 
 def find_latest_event(l, t):

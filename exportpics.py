@@ -17,8 +17,8 @@ FairyMusicBox系列软件作者：bilibili@调皮的码农
 from asyncio.windows_events import CONNECT_PIPE_INIT_DELAY
 import os
 import math
-from tkinter import Image
-from tkinter.tix import NoteBook
+# from tkinter import Image
+# from tkinter.tix import NoteBook
 import PIL.Image
 import PIL.ImageDraw
 import PIL.ImageFont
@@ -30,10 +30,12 @@ from process_midifile import process_midifile
 from process_emidfile import process_emidfile
 from util import*
 from util import KeyParams as kp
+from util import NoteInfo as ni
 from bar_ref import bar_ref
 from note_ref import note_ref
-import notecounter as nct
-from collections import OrderedDict
+from notemark import notemark
+# from notecounter import getLength
+# from collections import OrderedDict
 
 from watermark import watermark_a
 
@@ -131,10 +133,10 @@ def export_pics(file,
         if extention == '.emid':
             TEmid = emid.EmidFile(file)
             notes, length = process_emidfile(emid.mido.MidiFile(file))
-            NOTES_SUM, TAPE_LENGTH = nct.notes_and_length(filename)
+            # TAPE_LENGTH = getLength(filename)
         elif extention == '.mid':
             notes, length = process_midifile(mido.MidiFile(file),transposition=transposition,scale=scale,track_selection=track_selection,is30=is_30_note,interpret_bpm=interpret_bpm)
-            NOTES_SUM, TAPE_LENGTH = nct.notes_and_length(mido.MidiFile(file))
+            # TAPE_LENGTH = getLength(mido.MidiFile(file))
         else:
             raise(ValueError('Unknown file extention (\'.mid\' or \'.emid\' required)'))
 
@@ -152,6 +154,9 @@ def export_pics(file,
     else:
         raise(ValueError(
             'Unknown file type (filename, emid.EmidFile or mido.MidiFile required)'))
+
+    TAPE_LENGTH=round((length+16)/1000,2)
+    SUM_NOTE=len(notes)
 
     # 所有音轨都输出完毕
     if notes == None:
@@ -187,16 +192,9 @@ def export_pics(file,
 
 
 
-    # PITCH_TO_MBNUM=PITCH_TO_MBNUM_30 if is_30_note else PITCH_TO_MBNUM_15
-   
-
-    
-
     if font is None:  # 在FONT_PATH中寻找第一个能使用的字体
         for i in FONT_PATH:
             try:
-                # font_ref = PIL.ImageFont.truetype(i, round(mm2pixel(2, ppi)))
-                # font_ref2=PIL.ImageFont.truetype(i, round(mm2pixel(4, ppi)))
                 font0 = PIL.ImageFont.truetype(i, round(mm2pixel(3.3, ppi)))
                 font1 = PIL.ImageFont.truetype(i, round(mm2pixel(3.4, ppi)))
                 font2 = PIL.ImageFont.truetype(i, round(mm2pixel(6, ppi)))
@@ -213,7 +211,7 @@ def export_pics(file,
     images0 = []
     images1 = []
     # test
-    images2 = []
+    # images2 = []
 
     draws0 = []
     draws1 = []
@@ -245,6 +243,9 @@ def export_pics(file,
         draw2 = PIL.ImageDraw.Draw(image2)
         '写字'
         for j in range(col if i < pages - 1 else cols):
+            '水印'
+            image0.paste(watermark_a(),posconvert((-120,-250)))
+
             '标题文字'
             headingtext, align = heading
             textsize = font0.getsize(headingtext)
@@ -264,7 +265,7 @@ def export_pics(file,
                        fill=(0, 0, 0, 255))
             '栏尾页码'
             colnum = i * col + j + 1
-            draw0.text(xy=posconvert((kp.startpos[0] + kp.col_offset*j + 6, kp.endpos[1]), ppi),
+            draw1.text(xy=posconvert((kp.startpos[0] + kp.col_offset*j + 6, kp.endpos[1]), ppi),
                        text=str(colnum),
                        font=font1,
                        fill=(0, 0, 0, 255))
@@ -280,89 +281,33 @@ def export_pics(file,
                         text=char, font=font2, fill=(0, 0, 0, 60))
             '栏右上角页码'
             textsize = font2.getsize(str(colnum))
-            # draw0.text(
-            #    xy=posconvert(
-            #        (startpos[0] + col_offset*j + 62 - pixel2mm(textsize[0], ppi),
-            #         startpos[1] + 8*len(musicname) + 7 - pixel2mm(textsize[1], ppi)), ppi),
-            #    text=str(colnum), font=font2, fill=(0, 0, 0, 150))
-            # sign = ""
-            # sign1 = "sdbfe"
-            image0.paste(watermark_a(),posconvert((-120,-250)))
-            # 水印*4/栏
-            # draw0.text(
-            #     xy=posconvert(
-            #         (kp.startpos[0] + kp.col_offset*j + 15 - pixel2mm(textsize[0], ppi),
-            #          kp.startpos[1] + 8*len(musicname)-120 - pixel2mm(textsize[1], ppi)), ppi),
-            #     text=sign, font=font2, fill=(0, 0, 0, 40))
-            # draw0.text(
-            #     xy=posconvert(
-            #         (kp.startpos[0] + kp.col_offset*j + 15 - pixel2mm(textsize[0], ppi),
-            #          kp.startpos[1] + 8*len(musicname)-70 - pixel2mm(textsize[1], ppi)), ppi),
-            #     text=sign, font=font2, fill=(0, 0, 0, 40))
-            # draw0.text(
-            #     xy=posconvert(
-            #         (kp.startpos[0] + kp.col_offset*j + 15 - pixel2mm(textsize[0], ppi),
-            #          kp.startpos[1] + 8*len(musicname)-20 - pixel2mm(textsize[1], ppi)), ppi),
-            #     text=sign, font=font2, fill=(0, 0, 0, 40))
-            # draw0.text(
-            #     xy=posconvert(
-            #         (kp.startpos[0] + kp.col_offset*j + 15 - pixel2mm(textsize[0], ppi),
-            #          kp.startpos[1] + 8*len(musicname)+30 - pixel2mm(textsize[1], ppi)), ppi),
-            #     text=sign, font=font2, fill=(0, 0, 0, 40))
-            #################################################
-            # draw0.text(
-            #     xy=posconvert(
-            #         (kp.startpos[0] + kp.col_offset*j + 15 - pixel2mm(textsize[0], ppi),
-            #          kp.startpos[1] + 8*len(musicname) + 80 - pixel2mm(textsize[1], ppi)), ppi),
-            #     text=sign, font=font2, fill=(0, 0, 0, 40))
-            # draw0.text(
-            #     xy=posconvert(
-            #         (kp.startpos[0] + kp.col_offset*j + 15 - pixel2mm(textsize[0], ppi),
-            #          kp.startpos[1] + 8*len(musicname)+30 - pixel2mm(textsize[1], ppi)), ppi),
-            #     text=sign, font=font2, fill=(0, 0, 0, 40))
-            # draw0.text(
-            #     xy=posconvert(
-            #         (kp.startpos[0] + kp.col_offset*j + 15 - pixel2mm(textsize[0], ppi),
-            #          kp.startpos[1] + 8*len(musicname)+60 - pixel2mm(textsize[1], ppi)), ppi),
-            #     text=sign, font=font2, fill=(0, 0, 0, 40))
-            # draw0.text(
-            #     xy=posconvert(
-            #         (kp.startpos[0] + kp.col_offset*j + 15 - pixel2mm(textsize[0], ppi),
-            #          kp.startpos[1] + 8*len(musicname)+90 - pixel2mm(textsize[1], ppi)), ppi),
-            #     text=sign, font=font2, fill=(0, 0, 0, 40))
+
+            
+
 
         '画格子'
         for j in range(col if i < pages - 1 else cols):
 
             '整拍横线'
             for k in range(row + 1):
-                # if(j!=0 and k==0):
-                #     total_beats+=row
                 total_bars += 1
-                # 绘制小节标识和粘贴音名标识图
+
+                '绘制小节标识和粘贴音名标识图'
                 if (total_bars % beats_per_bar == 1 and k != row):
-                    # 粘贴音名标识图
+
+                    '粘贴音名标识图'
                     ref_horizontal_offset=kp.col_offset*j + 3.35 if is_30_note else kp.col_offset*j +1.35
                     if(COL_NO%9==0):
                         nr=note_ref(is_30_note)
                         image0.paste(nr,posconvert((kp.startpos[0] + ref_horizontal_offset,kp.startpos[1]+8*k+80)),mask=nr)
-                    # 绘制小节标识
+                    
+                    '绘制小节标识'
                     # bar_ref(COL_NO+1).show()
                     br=bar_ref(COL_NO+1)
                     image0.paste(br, posconvert((kp.startpos[0] + kp.col_offset*j + 6.5+kp.internote_spacing, kp.startpos[1] + 8*k+1)), mask=br)
-
-                    # if(COL_NO < (10-1)):
-                    #     draw0.text(xy=posconvert((startpos[0] + col_offset*j + 10 + 2*28, startpos[1] + 8*k)), text=str(
-                    #         COL_NO+1), font=font0, fill=(0, 0, 0, 255))
-                    # elif(COL_NO < 100):
-                    #     draw0.text(xy=posconvert((startpos[0] + col_offset*j + 10 + 2*27, startpos[1] + 8*k)), text=str(
-                    #         COL_NO+1), font=font0, fill=(0, 0, 0, 255))
-                    # else:
-                    #     draw0.text(xy=posconvert((startpos[0] + col_offset*j + 10 + 2*26, startpos[1] + 8*k)), text=str(
-                    #         COL_NO+1), font=font0, fill=(0, 0, 0, 255))
                     COL_NO += 1
 
-                # 绘制整拍横线
+                '绘制整拍横线'
                 draw0.line(posconvert((kp.startpos[0] + kp.col_offset*j + 6,
                                        kp.startpos[1] + 8*k), ppi) +
                            posconvert((kp.startpos[0] + kp.col_offset*j + 6 + kp.internote_spacing,
@@ -397,17 +342,18 @@ def export_pics(file,
         # image0.show()
         images1.append(image1)
         # image1.show()
-        images2.append(image2)
+        # images2.append(image2)
         # image2.show()
         draws0.append(draw0)
         draws1.append(draw1)
         draws2.append(draw2)
+        
     '画note'
-    # NOTES_SUM=notes.count()
     Index = 0
     for pitch, time in notes:
         page = math.floor(time / (col * row * 8))
         coln = math.floor(time / (row * 8)) - page * col
+
         # math.modf(x)[0]取小数部分
         rowmm = math.modf(time / (row * 8))[0] * (row * 8)
         draw1 = draws1[page]
@@ -429,13 +375,18 @@ def export_pics(file,
                           fill=(0, 0, 0, 255))
 
     # 标记孔位编号
+    
+
     for pitch, time in notes:
-        page = math.floor(time / (col * row * 8))
-        coln = math.floor(time / (row * 8)) - page * col
-        rowmm = math.modf(time / (row * 8))[0] * (row * 8)
+        ni.page = math.floor(time / (col * row * 8))
+        ni.coln = math.floor(time / (row * 8)) - ni.page * col
+        ni.rowmm = math.modf(time / (row * 8))[0] * (row * 8)
         draw1 = draws1[page]
         # 对x求余，即每x个孔显示一次孔位编号，默认50
-        if((NOTE_COUNT+1) % 100 == 0 or (NOTE_COUNT+1) == len(notes)):
+        
+
+        
+        if((NOTE_COUNT+1) % 100 == 0 or (NOTE_COUNT+1) == SUM_NOTE):
             if((NOTE_COUNT+1) < 10):
                 draw1.text(xy=posconvert((kp.startpos[0] + kp.col_offset*coln + 6 + 2*pitch - 0.9, kp.startpos[1] + rowmm-2.2),
                            ppi * ANTI_ALIAS), text=str(NOTE_COUNT+1), font=font0, fill=(255, 0, 0, 255))
@@ -451,7 +402,7 @@ def export_pics(file,
             else:
                 draw1.text(xy=posconvert((kp.startpos[0] + kp.col_offset*coln + 6 + 2*pitch - 4.9, kp.startpos[1] + rowmm-2.2),
                            ppi * ANTI_ALIAS), text=str(NOTE_COUNT+1), font=font0, fill=(255, 0, 0, 255))
-            if((NOTE_COUNT+1) == len(notes)):
+            if((NOTE_COUNT+1) == SUM_NOTE):
                 draw1.text(xy=posconvert((kp.startpos[0] + kp.col_offset*coln + 16, kp.endpos[1]), ppi),
                            text="Notes: "+str(NOTE_COUNT+1), font=font0, fill=(0, 255, 255, 255))
                 draw1.text(xy=posconvert((kp.startpos[0] + kp.col_offset*coln + 38, kp.endpos[1]), ppi), text="Length: "+str(
