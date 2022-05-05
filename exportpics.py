@@ -111,9 +111,9 @@ def export_pics(file,
         if filename is None:
             if track_selection > 0:
                 filename = os.path.splitext(
-                    file)[0] + '_Track' + str(track_selection)+'_%d.png'
+                    file)[0] + '_Track' + str(track_selection)+('@30' if is_30_note else '@15')+'_%d.png'
             else:
-                filename = os.path.splitext(file)[0] + '_%d.png'
+                filename = os.path.splitext(file)[0] +('@30' if is_30_note else '@15')+ '_%d.png'
             # 页眉显示曲目名称
             heading = (os.path.splitext(file)[
                        0] + '_Track'+str(track_selection), aligntype)
@@ -156,7 +156,7 @@ def export_pics(file,
             'Unknown file type (filename, emid.EmidFile or mido.MidiFile required)'))
 
     TAPE_LENGTH=round((length+16)/1000,2)
-    SUM_NOTE=len(notes)
+    SUM_NOTES=len(notes)
 
     # 所有音轨都输出完毕
     if notes == None:
@@ -198,6 +198,7 @@ def export_pics(file,
                 font0 = PIL.ImageFont.truetype(i, round(mm2pixel(3.3, ppi)))
                 font1 = PIL.ImageFont.truetype(i, round(mm2pixel(3.4, ppi)))
                 font2 = PIL.ImageFont.truetype(i, round(mm2pixel(6, ppi)))
+                font3 = PIL.ImageFont.truetype(i, round(mm2pixel(8, ppi)))
             except:
                 pass
             else:
@@ -206,26 +207,26 @@ def export_pics(file,
         font0 = PIL.ImageFont.truetype(font, round(mm2pixel(3.3, ppi)))
         font1 = PIL.ImageFont.truetype(font, round(mm2pixel(3.4, ppi)))
         font2 = PIL.ImageFont.truetype(font, round(mm2pixel(6, ppi)))
+        font3 = PIL.ImageFont.truetype(font, round(mm2pixel(8, ppi)))
 
     print('Drawing...')
     images0 = []
     images1 = []
-    # test
-    # images2 = []
+
 
     draws0 = []
     draws1 = []
-    # test
-    draws2 = []
+
 
     # 统计小节数，从0开始
     COL_NO = 0
-    # 统计已打印的note数量
-    NOTE_COUNT = 0
-    
 
+    # 统计已打印的note数量
+    DRAWED_NOTES = 0
+    
     # 统计总共小节数
     total_bars = 0
+
     # 每小节的节拍数
     beats_per_bar = 8
 
@@ -240,7 +241,8 @@ def export_pics(file,
         draw0 = PIL.ImageDraw.Draw(image0)
         draw1 = PIL.ImageDraw.Draw(image1)
 
-        draw2 = PIL.ImageDraw.Draw(image2)
+        # draw2 = PIL.ImageDraw.Draw(image2)
+
         '写字'
         for j in range(col if i < pages - 1 else cols):
             '水印'
@@ -263,28 +265,28 @@ def export_pics(file,
                        text=headingtext,
                        font=font0,
                        fill=(0, 0, 0, 255))
+
             '栏尾页码'
             colnum = i * col + j + 1
             draw1.text(xy=posconvert((kp.startpos[0] + kp.col_offset*j + 6, kp.endpos[1]), ppi),
                        text=str(colnum),
                        font=font1,
                        fill=(0, 0, 0, 255))
+
             '栏右上角文字'
             if(j == 0):
                 for k, char in enumerate(musicname):
                     textsize = font2.getsize(char)
                     text_horizontal_offset=kp.col_offset*j + 59 if is_30_note else kp.col_offset*j + 29
-                    draw0.text(
+                    draw1.text(
                         xy=posconvert(
                             (kp.startpos[0] + text_horizontal_offset - pixel2mm(textsize[0], ppi) / 2,
-                             kp.startpos[1] + 8*k + 7 - pixel2mm(textsize[1], ppi)), ppi),
-                        text=char, font=font2, fill=(0, 0, 0, 60))
+                             kp.startpos[1] + 8*k + 6 - pixel2mm(textsize[1], ppi)), ppi),
+                        text=char, font=font3, fill=(0, 0, 0, 60))
             '栏右上角页码'
             textsize = font2.getsize(str(colnum))
 
             
-
-
         '画格子'
         for j in range(col if i < pages - 1 else cols):
 
@@ -342,72 +344,38 @@ def export_pics(file,
         # image0.show()
         images1.append(image1)
         # image1.show()
-        # images2.append(image2)
-        # image2.show()
+
         draws0.append(draw0)
         draws1.append(draw1)
-        draws2.append(draw2)
+
         
     '画note'
     Index = 0
     for pitch, time in notes:
-        page = math.floor(time / (col * row * 8))
-        coln = math.floor(time / (row * 8)) - page * col
-
-        # math.modf(x)[0]取小数部分
-        rowmm = math.modf(time / (row * 8))[0] * (row * 8)
-        draw1 = draws1[page]
+        ni.page = math.floor(time / (col * row * 8))
+        ni.coln = math.floor(time / (row * 8)) - ni.page * col
+        ni.rowmm = math.modf(time / (row * 8))[0] * (row * 8)
+        draw1 = draws1[ni.page]
         Index += 1
 
         # 高亮没有落在网格线交点的孔位
         # 浮点数有精度误差，需要设置一个误差范围来修正
-        if(rowmm % 1 > 0.0001 and rowmm % 1 < 0.9999):
-            draw1.ellipse(posconvert((kp.startpos[0] + kp.col_offset*coln + 6 + 2*pitch - DOT_R,
-                                      kp.startpos[1] + rowmm - DOT_R), ppi * ANTI_ALIAS) +
-                          posconvert((kp.startpos[0] + kp.col_offset*coln + 6 + 2*pitch + DOT_R,
-                                      kp.startpos[1] + rowmm + DOT_R), ppi * ANTI_ALIAS),
+        if(ni.rowmm % 1 > 0.0001 and ni.rowmm % 1 < 0.9999):
+            draw1.ellipse(posconvert((kp.startpos[0] + kp.col_offset*ni.coln + 6 + 2*pitch - DOT_R,
+                                      kp.startpos[1] + ni.rowmm - DOT_R), ppi * ANTI_ALIAS) +
+                          posconvert((kp.startpos[0] + kp.col_offset*ni.coln + 6 + 2*pitch + DOT_R,
+                                      kp.startpos[1] + ni.rowmm + DOT_R), ppi * ANTI_ALIAS),
                           fill=(255, 0, 200, 255))
         else:
-            draw1.ellipse(posconvert((kp.startpos[0] + kp.col_offset*coln + 6 + 2*pitch - DOT_R,
-                                      kp.startpos[1] + rowmm - DOT_R), ppi * ANTI_ALIAS) +
-                          posconvert((kp.startpos[0] + kp.col_offset*coln + 6 + 2*pitch + DOT_R,
-                                      kp.startpos[1] + rowmm + DOT_R), ppi * ANTI_ALIAS),
+            draw1.ellipse(posconvert((kp.startpos[0] + kp.col_offset*ni.coln + 6 + 2*pitch - DOT_R,
+                                      kp.startpos[1] + ni.rowmm - DOT_R), ppi * ANTI_ALIAS) +
+                          posconvert((kp.startpos[0] + kp.col_offset*ni.coln + 6 + 2*pitch + DOT_R,
+                                      kp.startpos[1] + ni.rowmm + DOT_R), ppi * ANTI_ALIAS),
                           fill=(0, 0, 0, 255))
+        # 标记孔位编号
+        notemark(draw1,pitch,DRAWED_NOTES+1,kp,ni,font0,SUM_NOTES,round((length+16)/100,1))
+        DRAWED_NOTES = DRAWED_NOTES+1
 
-    # 标记孔位编号
-    
-
-    for pitch, time in notes:
-        ni.page = math.floor(time / (col * row * 8))
-        ni.coln = math.floor(time / (row * 8)) - ni.page * col
-        ni.rowmm = math.modf(time / (row * 8))[0] * (row * 8)
-        draw1 = draws1[page]
-        # 对x求余，即每x个孔显示一次孔位编号，默认50
-        
-
-        
-        if((NOTE_COUNT+1) % 100 == 0 or (NOTE_COUNT+1) == SUM_NOTE):
-            if((NOTE_COUNT+1) < 10):
-                draw1.text(xy=posconvert((kp.startpos[0] + kp.col_offset*coln + 6 + 2*pitch - 0.9, kp.startpos[1] + rowmm-2.2),
-                           ppi * ANTI_ALIAS), text=str(NOTE_COUNT+1), font=font0, fill=(255, 0, 0, 255))
-            elif((NOTE_COUNT+1) < 100):
-                draw1.text(xy=posconvert((kp.startpos[0] + kp.col_offset*coln + 6 + 2*pitch - 1.9, kp.startpos[1] + rowmm-2.2),
-                           ppi * ANTI_ALIAS), text=str(NOTE_COUNT+1), font=font0, fill=(255, 0, 0, 255))
-            elif((NOTE_COUNT+1) < 1000):
-                draw1.text(xy=posconvert((kp.startpos[0] + kp.col_offset*coln + 6 + 2*pitch - 2.9, kp.startpos[1] + rowmm-2.2),
-                           ppi * ANTI_ALIAS), text=str(NOTE_COUNT+1), font=font0, fill=(255, 0, 0, 255))
-            elif((NOTE_COUNT+1) < 10000):
-                draw1.text(xy=posconvert((kp.startpos[0] + kp.col_offset*coln + 6 + 2*pitch - 3.9, kp.startpos[1] + rowmm-2.2),
-                           ppi * ANTI_ALIAS), text=str(NOTE_COUNT+1), font=font0, fill=(255, 0, 0, 255))
-            else:
-                draw1.text(xy=posconvert((kp.startpos[0] + kp.col_offset*coln + 6 + 2*pitch - 4.9, kp.startpos[1] + rowmm-2.2),
-                           ppi * ANTI_ALIAS), text=str(NOTE_COUNT+1), font=font0, fill=(255, 0, 0, 255))
-            if((NOTE_COUNT+1) == SUM_NOTE):
-                draw1.text(xy=posconvert((kp.startpos[0] + kp.col_offset*coln + 16, kp.endpos[1]), ppi),
-                           text="Notes: "+str(NOTE_COUNT+1), font=font0, fill=(0, 255, 255, 255))
-                draw1.text(xy=posconvert((kp.startpos[0] + kp.col_offset*coln + 38, kp.endpos[1]), ppi), text="Length: "+str(
-                    round(TAPE_LENGTH*100, 1))+"cm", font=font0, fill=(255, 220, 0, 255))
-        NOTE_COUNT = NOTE_COUNT+1
 
     print('Resizing...')
     for i in range(pages):

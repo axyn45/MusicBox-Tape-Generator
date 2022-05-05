@@ -65,8 +65,8 @@ class KeyParams:
     startpos = None
     endpos = None
 
-NOTE_SUM=0
-LENGTH=0
+# NOTE_SUM=0
+# LENGTH=0
 
 class NoteInfo:
     page = None
