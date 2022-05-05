@@ -373,7 +373,7 @@ def export_pics(file,
                                       kp.startpos[1] + ni.rowmm + DOT_R), ppi * ANTI_ALIAS),
                           fill=(0, 0, 0, 255))
         # 标记孔位编号
-        notemark(draw1,pitch,DRAWED_NOTES+1,kp,ni,font0,SUM_NOTES,round((length+16)/100,1))
+        notemark(draw1,pitch,DRAWED_NOTES+1,kp,ni,font0,SUM_NOTES,round((length+16)/10,1))
         DRAWED_NOTES = DRAWED_NOTES+1
 
 
