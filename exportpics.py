@@ -246,7 +246,7 @@ def export_pics(file,
         '写字'
         for j in range(col if i < pages - 1 else cols):
             '水印'
-            image0.paste(watermark_a(),posconvert((-200,-300)))
+            # image0.paste(watermark_a(),posconvert((-200,-300)))
 
             '标题文字'
             headingtext, align = heading
@@ -327,14 +327,14 @@ def export_pics(file,
             for k in range(kp.total_notes):
                 if is_30_note:
                     if k in [5,11,17,23]:
-                        w=8
+                        w=6
                     else:
-                        w=2
+                        w=1
                 else:
                     if k in [2,4,6,8,10]:
-                        w=8
+                        w=6
                     else:
-                        w=2
+                        w=1
                 draw0.line(posconvert((kp.startpos[0] + kp.col_offset*j + 6 + 2*k,
                                        kp.startpos[1]), ppi) +
                            posconvert((kp.startpos[0] + kp.col_offset*j + 6 + 2*k,
@@ -440,7 +440,7 @@ def batch_export_pics(path=None,
                       font=None,
                       track_selection=-1,
                       is_30_note=True,
-                      scale=2,
+                      scale=1,
                       transposition=0):
     '''
     批量将path目录下的所有.mid和.emid文件转换为纸带设计稿图片
