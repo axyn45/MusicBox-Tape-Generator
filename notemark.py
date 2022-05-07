@@ -23,4 +23,4 @@ def notemark(draw, pitch, number, kp, ni, font, sum_note,tape_length,section=100
             draw.text(xy=posconvert((kp.startpos[0] + kp.col_offset*ni.coln + 16, kp.endpos[1]), ppi),
                        text="Notes: "+str(number), font=font, fill=(0, 255, 255, 255))
             draw.text(xy=posconvert((kp.startpos[0] + kp.col_offset*ni.coln + 38, kp.endpos[1]), ppi), text="Length: "+str(
-                round((tape_length+16)/100, 1))+"cm", font=font, fill=(255, 220, 0, 255))
+                tape_length)+"cm", font=font, fill=(255, 220, 0, 255))

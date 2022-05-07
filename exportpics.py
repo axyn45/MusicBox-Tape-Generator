@@ -246,7 +246,7 @@ def export_pics(file,
         '写字'
         for j in range(col if i < pages - 1 else cols):
             '水印'
-            image0.paste(watermark_a(),posconvert((-120,-250)))
+            image0.paste(watermark_a(),posconvert((-200,-300)))
 
             '标题文字'
             headingtext, align = heading
@@ -297,11 +297,11 @@ def export_pics(file,
                 '绘制小节标识和粘贴音名标识图'
                 if (total_bars % beats_per_bar == 1 and k != row):
 
-                    '粘贴音名标识图'
-                    ref_horizontal_offset=kp.col_offset*j + 3.35 if is_30_note else kp.col_offset*j +1.35
-                    if(COL_NO%9==0):
-                        nr=note_ref(is_30_note)
-                        image0.paste(nr,posconvert((kp.startpos[0] + ref_horizontal_offset,kp.startpos[1]+8*k+80)),mask=nr)
+                    # '粘贴音名标识图'
+                    # ref_horizontal_offset=kp.col_offset*j + 3.35 if is_30_note else kp.col_offset*j +1.35
+                    # if(COL_NO%9==0):
+                    #     nr=note_ref(is_30_note)
+                    #     image0.paste(nr,posconvert((kp.startpos[0] + ref_horizontal_offset,kp.startpos[1]+8*k+80)),mask=nr)
                     
                     '绘制小节标识'
                     # bar_ref(COL_NO+1).show()
@@ -325,11 +325,21 @@ def export_pics(file,
                            fill=(0, 0, 0, 128), width=1)
             '竖线'
             for k in range(kp.total_notes):
+                if is_30_note:
+                    if k in [5,11,17,23]:
+                        w=8
+                    else:
+                        w=2
+                else:
+                    if k in [2,4,6,8,10]:
+                        w=8
+                    else:
+                        w=2
                 draw0.line(posconvert((kp.startpos[0] + kp.col_offset*j + 6 + 2*k,
                                        kp.startpos[1]), ppi) +
                            posconvert((kp.startpos[0] + kp.col_offset*j + 6 + 2*k,
                                        kp.endpos[1]), ppi),
-                           fill=(0, 0, 0, 255), width=1)
+                           fill=(0, 0, 0, 255), width=w)
                 # image0.show()
             total_bars -= 1
         '分隔线'
@@ -360,7 +370,7 @@ def export_pics(file,
 
         # 高亮没有落在网格线交点的孔位
         # 浮点数有精度误差，需要设置一个误差范围来修正
-        if(ni.rowmm % 1 > 0.0001 and ni.rowmm % 1 < 0.9999):
+        if(time % 4 > 0.0001 and time % 1 < 0.9999):
             draw1.ellipse(posconvert((kp.startpos[0] + kp.col_offset*ni.coln + 6 + 2*pitch - DOT_R,
                                       kp.startpos[1] + ni.rowmm - DOT_R), ppi * ANTI_ALIAS) +
                           posconvert((kp.startpos[0] + kp.col_offset*ni.coln + 6 + 2*pitch + DOT_R,
@@ -373,7 +383,7 @@ def export_pics(file,
                                       kp.startpos[1] + ni.rowmm + DOT_R), ppi * ANTI_ALIAS),
                           fill=(0, 0, 0, 255))
         # 标记孔位编号
-        notemark(draw1,pitch,DRAWED_NOTES+1,kp,ni,font0,SUM_NOTES,round((length+16)/10,1))
+        notemark(draw1,pitch,DRAWED_NOTES+1,kp,ni,font0,SUM_NOTES,round((length)/10,1))
         DRAWED_NOTES = DRAWED_NOTES+1
 
 
@@ -430,7 +440,7 @@ def batch_export_pics(path=None,
                       font=None,
                       track_selection=-1,
                       is_30_note=True,
-                      scale=1,
+                      scale=2,
                       transposition=0):
     '''
     批量将path目录下的所有.mid和.emid文件转换为纸带设计稿图片
