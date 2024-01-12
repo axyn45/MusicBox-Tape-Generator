@@ -254,7 +254,7 @@ def export_pics(file,
 
             '标题文字'
             headingtext, align = heading
-            textsize = font0.getsize(headingtext)
+            textsize = font0.getbbox(headingtext)
 
             if align == LEFT_ALIGN:
                 posX = 7
@@ -280,7 +280,7 @@ def export_pics(file,
             '栏右上角文字'
             if(j == 0):
                 for k, char in enumerate(musicname):
-                    textsize = font2.getsize(char)
+                    textsize = font2.getbbox(char)
                     text_horizontal_offset=kp.col_offset*j + 59 if is_30_note else kp.col_offset*j + 29
                     draw1.text(
                         xy=posconvert(
@@ -288,7 +288,7 @@ def export_pics(file,
                              kp.startpos[1] + 8*k + 6 - pixel2mm(textsize[1], ppi)), ppi),
                         text=char, font=font3, fill=(0, 0, 0, 60))
             '栏右上角页码'
-            textsize = font2.getsize(str(colnum))
+            textsize = font2.getbbox(str(colnum))
 
             
         '画格子'
