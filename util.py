@@ -68,6 +68,8 @@ class KeyParams:
 # NOTE_SUM=0
 # LENGTH=0
 
+
+
 class NoteInfo:
     page = None
     coln = None

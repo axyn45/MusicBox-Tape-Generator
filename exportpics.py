@@ -15,6 +15,7 @@ FairyMusicBox系列软件作者：bilibili@调皮的码农
 *请备份重要文件！
 '''
 from asyncio.windows_events import CONNECT_PIPE_INIT_DELAY
+import fractions
 import os
 import math
 # from tkinter import Image
@@ -56,7 +57,10 @@ def export_pics(file,
                 overwrite: bool = False,
                 track_selection: int = -1,
                 is_30_note=False,
-                isSuccessful: bool = True) -> list:
+                isSuccessful: bool = True,
+                watermarkEN=True,
+                note_counterEN=True,
+                frac_note_hilight=True) -> list:
     '''
     将.emid或.mid文件转换成纸带八音盒设计稿
 
@@ -246,7 +250,7 @@ def export_pics(file,
         '写字'
         for j in range(col if i < pages - 1 else cols):
             '水印'
-            # image0.paste(watermark_a(),posconvert((-200,-300)))
+            if watermarkEN: image0.paste(watermark_a(),posconvert((-200,-300)))
 
             '标题文字'
             headingtext, align = heading
@@ -370,7 +374,7 @@ def export_pics(file,
 
         # 高亮没有落在网格线交点的孔位
         # 浮点数有精度误差，需要设置一个误差范围来修正
-        if(time % 4 > 0.0001 and time % 1 < 0.9999):
+        if(frac_note_hilight and time % 4 > 0.0001 and time % 1 < 0.9999):
             draw1.ellipse(posconvert((kp.startpos[0] + kp.col_offset*ni.coln + 6 + 2*pitch - DOT_R,
                                       kp.startpos[1] + ni.rowmm - DOT_R), ppi * ANTI_ALIAS) +
                           posconvert((kp.startpos[0] + kp.col_offset*ni.coln + 6 + 2*pitch + DOT_R,
@@ -383,7 +387,8 @@ def export_pics(file,
                                       kp.startpos[1] + ni.rowmm + DOT_R), ppi * ANTI_ALIAS),
                           fill=(0, 0, 0, 255))
         # 标记孔位编号
-        notemark(draw1,pitch,DRAWED_NOTES+1,kp,ni,font0,SUM_NOTES,round((length)/10,1))
+        if(note_counterEN):
+            notemark(draw1,pitch,DRAWED_NOTES+1,kp,ni,font0,SUM_NOTES,round((length)/10,1))
         DRAWED_NOTES = DRAWED_NOTES+1
 
 
@@ -428,7 +433,7 @@ def export_pics(file,
             # cpimage.show()
             cpimage.save(save_path, dpi=(300, 300))
         result.append(cpimage)
-
+# Parameter
     print('Done!')
     return isSuccessful
 
@@ -441,7 +446,10 @@ def batch_export_pics(path=None,
                       track_selection=-1,
                       is_30_note=True,
                       scale=1,
-                      transposition=0):
+                      transposition=0,
+                      watermark=True,
+                      note_counter=True,
+                      fractional_note_highlight=True):
     '''
     批量将path目录下的所有.mid和.emid文件转换为纸带设计稿图片
     如果path参数留空，则取当前工作目录
@@ -462,7 +470,10 @@ def batch_export_pics(path=None,
                             font=font,
                             is_30_note=is_30_note,
                             scale=scale,
-                            transposition=transposition)
+                            transposition=transposition,
+                            watermarkEN=watermark,
+                            note_counterEN=note_counter,
+                            frac_note_hilight=fractional_note_highlight)
             elif (track_selection == 0):
                 i = 1
                 while export_pics(file=filename,
@@ -474,7 +485,10 @@ def batch_export_pics(path=None,
                                   track_selection=i,
                                   is_30_note=is_30_note,
                                   scale=scale,
-                                  transposition=transposition):
+                                  transposition=transposition,
+                                  watermarkEN=watermark,
+                                  note_counterEN=note_counter,
+                                  frac_note_hilight=fractional_note_highlight):
                     i += 1
             else:
                 export_pics(file=filename,
@@ -486,7 +500,8 @@ def batch_export_pics(path=None,
                             track_selection=track_selection,
                             is_30_note=is_30_note,
                             scale=scale,
-                            transposition=transposition)
+                            transposition=transposition,
+                            watermarkEN=watermark)
 
 
 if __name__ == '__main__':
@@ -500,4 +515,4 @@ if __name__ == '__main__':
     #             transposition=0,
     #             papersize=A4_VERTICAL_30,
     #             ppi=300)
-    batch_export_pics(is_30_note=True)  # 批量导出
+    batch_export_pics(is_30_note=True,scale=1,watermark=False,note_counter=True,fractional_note_highlight=False)  # 批量导出

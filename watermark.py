@@ -38,8 +38,8 @@ def watermark_a(heading='B站@',content='Alex的八音盒'):
     x0=0
     while(y<size[1]):
         while(x<size[0]):
-            draw.text(xy=posconvert((x+2, y)),text=heading, font=font2, fill=(0, 0, 0, 15))
-            draw.text(xy=posconvert((x, y+vertical_space_1)),text=content, font=font1, fill=(0, 0, 0, 15))
+            draw.text(xy=posconvert((x+2, y)),text=heading, font=font2, fill=(0, 0, 0, 20))
+            draw.text(xy=posconvert((x, y+vertical_space_1)),text=content, font=font1, fill=(0, 0, 0, 20))
             x+=horizontal_space
         y+=vertical_space_1+vertical_space_2
         if x0==0:x0=-horizontal_space/2
