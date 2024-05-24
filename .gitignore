@@ -1,3 +1,7 @@
+<<<<<<< HEAD
 _*
 .*
 !.gitignore
+=======
+__pycache__
+>>>>>>> 42d12af400193fdd43890e4266bc63cd237f4dcf

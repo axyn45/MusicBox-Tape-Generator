@@ -254,7 +254,11 @@ def export_pics(file,
 
             '标题文字'
             headingtext, align = heading
+<<<<<<< HEAD
             textsize = font0.getbbox(headingtext)   #(left, top, right, bottom)
+=======
+            textsize = font0.getbbox(headingtext)
+>>>>>>> 42d12af400193fdd43890e4266bc63cd237f4dcf
 
             if align == LEFT_ALIGN:
                 posX = 7
