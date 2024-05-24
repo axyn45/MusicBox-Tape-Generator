@@ -254,16 +254,16 @@ def export_pics(file,
 
             '标题文字'
             headingtext, align = heading
-            textsize = font0.getsize(headingtext)
+            textsize = font0.getbbox(headingtext)   #(left, top, right, bottom)
 
             if align == LEFT_ALIGN:
                 posX = 7
             elif align == CENTER_ALIGN:
-                posX = (size[0] - pixel2mm(textsize[0], ppi)) / 2
+                posX = (size[0] - pixel2mm(textsize[2]-textsize[0], ppi)) / 2
             elif align == RIGHT_ALIGN:
-                posX = (size[0] - pixel2mm(textsize[0], ppi)) - 7
+                posX = (size[0] - pixel2mm(textsize[2]-textsize[0], ppi)) - 7
             posY = ((size[1] - kp.contentsize[1]) / 2 -
-                    pixel2mm(textsize[1], ppi)) - 1
+                    pixel2mm(textsize[3]-textsize[1], ppi)) - 1
 
             draw0.text(xy=posconvert((posX, posY-1), ppi),
                        text=headingtext,
@@ -280,15 +280,15 @@ def export_pics(file,
             '栏右上角文字'
             if(j == 0):
                 for k, char in enumerate(musicname):
-                    textsize = font2.getsize(char)
+                    textsize = font2.getbbox(char)
                     text_horizontal_offset=kp.col_offset*j + 59 if is_30_note else kp.col_offset*j + 29
                     draw1.text(
                         xy=posconvert(
-                            (kp.startpos[0] + text_horizontal_offset - pixel2mm(textsize[0], ppi) / 2,
-                             kp.startpos[1] + 8*k + 6 - pixel2mm(textsize[1], ppi)), ppi),
+                            (kp.startpos[0] + text_horizontal_offset - pixel2mm(textsize[2]-textsize[0], ppi) / 2,
+                             kp.startpos[1] + 8*k + 6 - pixel2mm(textsize[3]-textsize[1], ppi)), ppi),
                         text=char, font=font3, fill=(0, 0, 0, 60))
             '栏右上角页码'
-            textsize = font2.getsize(str(colnum))
+            textsize = font2.getbbox(str(colnum))
 
             
         '画格子'
@@ -388,7 +388,7 @@ def export_pics(file,
                           fill=(0, 0, 0, 255))
         # 标记孔位编号
         if(note_counterEN):
-            notemark(draw1,pitch,DRAWED_NOTES+1,kp,ni,font0,SUM_NOTES,round((length)/10,1))
+            notemark(draw1,pitch,DRAWED_NOTES+1,kp,ni,font0,SUM_NOTES,round((length)/10,1),section=200)
         DRAWED_NOTES = DRAWED_NOTES+1
 
 
